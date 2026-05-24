@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Playfair Display', ui-serif, Georgia, serif;
+
+  --color-surface: #0a0a0f;
+  --color-surface-elevated: #12121a;
+  --color-border: #1e1e2e;
+  --color-muted: #71717a;
+  --color-accent: #a78bfa;
+  --color-accent-soft: #7c3aed;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface font-sans text-zinc-100 antialiased;
+  }
+}
