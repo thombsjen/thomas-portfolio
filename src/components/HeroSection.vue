@@ -12,7 +12,7 @@ let sectionsByAnchor = new Map()
 
 const revealedSections = new Set()
 /** Total wipe duration per card (overlay opacity/mask 0% → 100% transparent, left → right). */
-const REVEAL_DURATION_MS = 1500
+const REVEAL_DURATION_MS = 2500
 /** Left-to-right order when a section has multiple cards (kept small vs. wipe time). */
 const STAGGER_MS = 80
 const REVEAL_FROM_BOTTOM_VH = 0.2
@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 
     <aside class="sidebar" aria-label="Primary">
       <a href="#" class="logo-mark" data-hover aria-label="Thomas home">
-        <span>TH</span>
+        <img src="/images/logo.png" alt="" width="28" height="28" />
       </a>
       <a href="#" class="circle-icon" data-hover aria-label="Information">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card video-card"
         data-section-anchor="5"
-        :style="{ top: '5vh', left: '5vw', width: '240px' }"
+        :style="{ top: '0vh', left: '0vw', width: '100vw', height: '100vh' }"
         aria-label="Background video"
       >
         <div class="youtube-wrap">
@@ -218,6 +218,7 @@ onBeforeUnmount(() => {
       >
         <div class="img-rect" style="width: 600px; height: 320px;">
           <span class="img-tag">PHOTO 01</span>
+          <img src="/images/band3.jpg" alt="" class="img-rect-img" />
         </div>
         <div class="img-caption">Thomas Jennings - Observant Palmer Band</div>
       </article>
@@ -242,8 +243,8 @@ onBeforeUnmount(() => {
           <span>STATS</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">REAL MADRID S25-26</div>
-        <div class="stats-value">#1 Clean Sheets</div>
+        <div class="stats-label">Minneapolis, MN</div>
+        <div class="stats-value">Twin Cities</div>
       </article>
 
       <article
@@ -253,8 +254,9 @@ onBeforeUnmount(() => {
       >
         <div class="img-rect" style="width: 280px; height: 360px;">
           <span class="img-tag">PHOTO 02</span>
+          <img src="/images/me.jpg" alt="" class="img-rect-img" />
         </div>
-        <div class="img-caption">Match Day — Santiago Bernabéu</div>
+        <div class="img-caption">Minneapolis, MN</div>
       </article>
 
       <article
@@ -264,7 +266,7 @@ onBeforeUnmount(() => {
       >
         <div class="card-corner">03</div>
         <p class="quote-text">
-          BACK TO PRACTICE AND HUNGRY FOR <span class="gold">MORE</span>
+          BACK TO THE STUDIO AND HUNGRY FOR <span class="gold">MORE</span>
         </p>
       </article>
 
@@ -277,8 +279,8 @@ onBeforeUnmount(() => {
           <span>STATS</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">CAREER CAPS</div>
-        <div class="stats-value">100+</div>
+        <div class="stats-label">Years of Experience</div>
+        <div class="stats-value">20+</div>
       </article>
 
       <article
@@ -297,10 +299,11 @@ onBeforeUnmount(() => {
         data-section-anchor="351"
         :style="{ top: '350vh', right: '8vw' }"
       >
-        <div class="img-rect" style="width: 240px; height: 300px;">
-          <span class="img-tag">PHOTO 03</span>
+        <div class="img-rect" style="width: 540px; height: 300px;">
+          <!-- <span class="img-tag">PHOTO 03</span> -->
+          <img src="/images/band1.jpg" alt="" class="img-rect-img" />
         </div>
-        <div class="img-caption">Training Ground — Valdebebas</div>
+        <div class="img-caption">Minneapolis, MN</div>
       </article>
 
       <article
@@ -372,19 +375,19 @@ onBeforeUnmount(() => {
   height: 28px;
   display: grid;
   place-items: center;
-  border: 1px solid #c9a84c;
-  color: #c9a84c;
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.05em;
   text-decoration: none;
-  transition: opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+  transition: opacity 0.3s ease;
+}
+
+.logo-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-mark:hover {
-  background: #c9a84c;
-  color: #0a0a0a;
+  opacity: 0.75;
 }
 
 .circle-icon {
