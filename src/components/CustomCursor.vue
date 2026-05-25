@@ -35,7 +35,6 @@ const onMove = (e) => {
     ringX = mouseX
     ringY = mouseY
   }
-  writeDot()
 }
 
 const onLeave = () => {
@@ -46,19 +45,14 @@ const onEnter = () => {
   isVisible = true
 }
 
-const onOver = (e) => {
-  if (e.target?.closest?.('a, button, [data-hover]')) {
-    isHovering = true
-  }
-}
-
-const onOut = (e) => {
-  if (e.target?.closest?.('a, button, [data-hover]')) {
+const tick = () => {
+  if (isVisible) {
+    const hit = document.elementFromPoint(mouseX, mouseY)
+    isHovering = Boolean(hit?.closest?.('a, button, [data-hover]'))
+  } else {
     isHovering = false
   }
-}
 
-const tick = () => {
   ringX = lerp(ringX, mouseX, 0.12)
   ringY = lerp(ringY, mouseY, 0.12)
 
@@ -81,12 +75,20 @@ const tick = () => {
   rafId = requestAnimationFrame(tick)
 }
 
+const onVisibility = () => {
+  if (document.hidden) {
+    if (rafId) cancelAnimationFrame(rafId)
+    rafId = null
+  } else if (!rafId) {
+    rafId = requestAnimationFrame(tick)
+  }
+}
+
 onMounted(() => {
   window.addEventListener('mousemove', onMove, { passive: true })
   window.addEventListener('mouseleave', onLeave)
   window.addEventListener('mouseenter', onEnter)
-  document.addEventListener('mouseover', onOver, true)
-  document.addEventListener('mouseout', onOut, true)
+  document.addEventListener('visibilitychange', onVisibility)
   rafId = requestAnimationFrame(tick)
 })
 
@@ -94,8 +96,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onMove)
   window.removeEventListener('mouseleave', onLeave)
   window.removeEventListener('mouseenter', onEnter)
-  document.removeEventListener('mouseover', onOver, true)
-  document.removeEventListener('mouseout', onOut, true)
+  document.removeEventListener('visibilitychange', onVisibility)
   if (rafId) cancelAnimationFrame(rafId)
 })
 </script>
@@ -117,7 +118,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
   z-index: 9999;
   will-change: transform, opacity;
-  mix-blend-mode: difference;
   opacity: 0;
 }
 
@@ -132,7 +132,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
   z-index: 9998;
   will-change: transform, opacity;
-  mix-blend-mode: difference;
   opacity: 0;
 }
 
