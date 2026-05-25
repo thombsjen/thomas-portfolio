@@ -3,7 +3,6 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 const canvasEl = ref(null)
 
-const COUNT = 240
 const COLORS = ['#c9a84c', '#d4af37', '#e8c87a', '#b8860b']
 
 let ctx = null
@@ -13,10 +12,24 @@ let width = 0
 let height = 0
 let dpr = 1
 let resizeHandler = null
+let visibilityHandler = null
+let running = true
+let particleCount = 120
+
+const prefersReducedMotion = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const resolveParticleCount = () => {
+  if (prefersReducedMotion()) return 0
+  const cores = navigator.hardwareConcurrency || 4
+  const coarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+  if (coarse || cores <= 4) return 72
+  return 120
+}
 
 const seedParticles = () => {
   particles = []
-  for (let i = 0; i < COUNT; i++) {
+  for (let i = 0; i < particleCount; i++) {
     const r = 2.5 + Math.random() * 5.5
     particles.push({
       x: Math.random() * width,
@@ -34,8 +47,9 @@ const seedParticles = () => {
   }
 }
 
+/** Lightweight 4-point star (was 20 spikes — ~5× fewer path segments per particle). */
 const drawStar = (x, y, outerR, innerR, rotation) => {
-  const spikes = 20
+  const spikes = 4
   const step = Math.PI / spikes
   let rot = rotation - Math.PI / 2
 
@@ -65,6 +79,9 @@ const resize = () => {
 }
 
 const draw = (t) => {
+  rafId = null
+  if (!running || particleCount === 0) return
+
   ctx.clearRect(0, 0, width, height)
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i]
@@ -77,7 +94,7 @@ const draw = (t) => {
     else if (p.y > height + 10) p.y = -10
 
     const r = Math.max(0.9, p.baseR + Math.sin(t * p.pulseSpeed + p.phase) * (p.baseR * 0.35))
-    const innerR = r * 0.18
+    const innerR = r * 0.24
 
     ctx.globalAlpha = p.opacity
     ctx.fillStyle = p.color
@@ -87,22 +104,52 @@ const draw = (t) => {
   rafId = requestAnimationFrame(draw)
 }
 
+const scheduleFrame = () => {
+  if (!rafId && running && particleCount > 0) {
+    rafId = requestAnimationFrame(draw)
+  }
+}
+
+const startLoop = () => {
+  scheduleFrame()
+}
+
+const stopLoop = () => {
+  if (rafId) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+}
+
 onMounted(() => {
-  ctx = canvasEl.value.getContext('2d')
+  particleCount = resolveParticleCount()
+  ctx =
+    canvasEl.value.getContext('2d', { alpha: true, desynchronized: true }) ||
+    canvasEl.value.getContext('2d')
   resize()
-  seedParticles()
-  rafId = requestAnimationFrame(draw)
+  if (particleCount > 0) {
+    seedParticles()
+    startLoop()
+  }
 
   resizeHandler = () => {
     resize()
-    seedParticles()
+    if (particleCount > 0) seedParticles()
   }
   window.addEventListener('resize', resizeHandler)
+
+  visibilityHandler = () => {
+    running = !document.hidden
+    if (running) startLoop()
+    else stopLoop()
+  }
+  document.addEventListener('visibilitychange', visibilityHandler)
 })
 
 onBeforeUnmount(() => {
-  if (rafId) cancelAnimationFrame(rafId)
+  stopLoop()
   if (resizeHandler) window.removeEventListener('resize', resizeHandler)
+  if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler)
 })
 </script>
 
@@ -128,6 +175,12 @@ onBeforeUnmount(() => {
   }
   to {
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle-canvas {
+    display: none;
   }
 }
 </style>
