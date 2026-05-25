@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
       THOMAS PORTFOLIO &nbsp;/&nbsp; <span class="gold">VOL.01</span>
     </div>
 
-    <div class="scroll-content">
+    <!-- <div class="scroll-content">
       <article
         class="scroll-card video-card"
         data-section-anchor="5"
@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
           />
         </div>
       </article>
-    </div>
+    </div> -->
 
     <div ref="scrollLayer" class="scroll-content">
       <article
