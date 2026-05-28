@@ -19,6 +19,7 @@ const REVEAL_FROM_BOTTOM_VH = 0.2
 
 const YOUTUBE_VIDEO_ID = '9iHbUniBWqI'
 const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&enablejsapi=0`
+const MOBILE_BREAKPOINT = 720
 
 const parseTopVh = (card) => {
   const top = getComputedStyle(card).top
@@ -96,6 +97,9 @@ const setupCardSections = () => {
 }
 
 onMounted(() => {
+  const root = scrollLayer.value?.closest('.hero')
+  const isMobile = window.innerWidth <= MOBILE_BREAKPOINT
+
   scrollHandler = () => {
     if (rafId) return
     rafId = window.requestAnimationFrame(() => {
@@ -106,6 +110,14 @@ onMounted(() => {
   window.addEventListener('scroll', scrollHandler, { passive: true })
   window.addEventListener('resize', scrollHandler, { passive: true })
   setupCardSections()
+
+  if (isMobile && root) {
+    // Mobile uses a simple vertical layout, so reveal all cards immediately.
+    root.querySelectorAll('.scroll-content .scroll-card').forEach((card) => {
+      card.classList.add('is-revealed')
+    })
+  }
+
   requestAnimationFrame(() => {
     requestAnimationFrame(onScroll)
   })
@@ -150,7 +162,7 @@ onBeforeUnmount(() => {
           />
         </svg>
       </span>
-      <span class="spotify-text">This is what I'm listening to</span>
+      <span class="spotify-text">Creative Production • Music • Software Engineering • Digital Innovation</span>
     </a>
 
     <div class="scroll-progress" aria-hidden="true">
@@ -159,10 +171,10 @@ onBeforeUnmount(() => {
 
     <div class="meta-top-left">
       <span class="dot-live" aria-hidden="true" />
-      <span>Minneapolis · 2026</span>
+      <span>Minneapolis, Minnesota · 2026</span>
     </div>
     <div class="meta-top-right">
-      THOMAS PORTFOLIO &nbsp;/&nbsp; <span class="gold">VOL.01</span>
+      BOXCAR VON PRODUCTIONS — MYTH ANTHROPIX &nbsp;/&nbsp; <span class="gold">VOL.01</span>
     </div>
 
     <!-- <div class="scroll-content">
@@ -194,7 +206,7 @@ onBeforeUnmount(() => {
       >
         <div class="card-corner">01</div>
         <p class="quote-text">
-          GRATEFUL TO WIN ALL THE CUPS WITH MY DREAM <span class="gold">CLUB</span>
+          Boxcar von productions — <span class="gold">Myth Anthropix</span>
         </p>
       </article>
 
@@ -204,59 +216,71 @@ onBeforeUnmount(() => {
         :style="{ top: '5vh', right: '5vw', width: '240px' }"
       >
         <div class="stats-head">
-          <span>My Bands</span>
+          <span>Hero Section</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">Observant Palmer Band</div>
-        <div class="stats-value">Thomas Jennings</div>
+        <div class="stats-label">Building Sound, Stories, and Software</div>
+        <div class="stats-value">Professional Musician & Software Engineer</div>
       </article>
 
       <article
         class="scroll-card image-card"
         data-section-anchor="85"
-        :style="{ top: '85vh', left: '5vw' }"
+        :style="{ top: '55vh', left: '5vw' }"
       >
         <div class="img-rect" style="width: 600px; height: 320px;">
-          <span class="img-tag">PHOTO 01</span>
-          <img src="/images/band3.jpg" alt="" class="img-rect-img" />
+          <span class="img-tag">ABOUT</span>
+          <img src="/images/band1.jpg" alt="" class="img-rect-img" />
         </div>
-        <div class="img-caption">Thomas Jennings - Observant Palmer Band</div>
+        <div class="img-caption">A multidisciplinary creator working at the intersection of music and technology.</div>
       </article>
 
       <article
         class="scroll-card quote-card"
         data-section-anchor="85"
-        :style="{ top: '85vh', right: '8vw', width: '280px' }"
+        :style="{ top: '55vh', right: '8vw', width: '280px' }"
       >
         <div class="card-corner">02</div>
         <p class="quote-text">
-          REACHING THE MILESTONE OF 100 <span class="gold">STUDIOS</span>
+          I CREATE IMMERSIVE MUSIC EXPERIENCES, DIGITAL PRODUCTS, AND <span class="gold">SOFTWARE</span>
         </p>
+      </article>
+
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="130"
+        :style="{ top: '108vh', right: '6vw' }"
+      >
+        <div class="img-rect" style="width: 320px; height: 420px;">
+          <span class="img-tag">ME</span>
+          <img src="/images/me.jpg" alt="" class="img-rect-img" />
+        </div>
+        <div class="img-caption">An artist and engineer blending creativity, performance, and technology.</div>
       </article>
 
       <article
         class="scroll-card stats-card"
         data-section-anchor="174"
-        :style="{ top: '170vh', right: '5vw', width: '260px' }"
+        :style="{ top: '108vh', left: '5vw', width: '260px' }"
       >
         <div class="stats-head">
-          <span>STATS</span>
+          <span>Services</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">Minneapolis, MN</div>
-        <div class="stats-value">Twin Cities</div>
+        <div class="stats-label">Music & Creative Production</div>
+        <div class="stats-value">Music Production · Audio Engineering · Sound Design · Mixing & Mastering</div>
       </article>
 
       <article
         class="scroll-card image-card"
         data-section-anchor="174"
-        :style="{ top: '170vh', left: '5vw' }"
+        :style="{ top: '150vh', left: '5vw' }"
       >
         <div class="img-rect" style="width: 280px; height: 360px;">
-          <span class="img-tag">PHOTO 02</span>
-          <img src="/images/me.jpg" alt="" class="img-rect-img" />
+          <span class="img-tag">SOFTWARE ENGINEERING</span>
+          <img src="/images/band2.jpg" alt="" class="img-rect-img" />
         </div>
-        <div class="img-caption">Minneapolis, MN</div>
+        <div class="img-caption">Full stack web development, APIs, cloud infrastructure, and technical consulting.</div>
       </article>
 
       <article
@@ -266,55 +290,94 @@ onBeforeUnmount(() => {
       >
         <div class="card-corner">03</div>
         <p class="quote-text">
-          BACK TO THE STUDIO AND HUNGRY FOR <span class="gold">MORE</span>
+          CREATIVITY MEETS <span class="gold">ENGINEERING</span>
         </p>
       </article>
 
       <article
         class="scroll-card stats-card"
         data-section-anchor="261"
-        :style="{ top: '260vh', left: '5vw', width: '240px' }"
+        :style="{ top: '208vh', left: '5vw', width: '300px' }"
       >
         <div class="stats-head">
-          <span>STATS</span>
+          <span>Featured Skills</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">Years of Experience</div>
-        <div class="stats-value">20+</div>
+        <div class="stats-label">Technical Skills</div>
+        <div class="stats-value">
+          JavaScript / Node.js <br> React <br> API Development <br> Cloud &amp; Server Infrastructure <br>
+          Database Systems <br> Real-Time Streaming <br> Frontend &amp; Backend Development <br>
+          Performance Optimization
+        </div>
       </article>
 
       <article
         class="scroll-card quote-card"
         data-section-anchor="261"
-        :style="{ top: '262vh', right: '7vw', width: '300px' }"
+        :style="{ top: '222vh', right: '7vw', width: '300px' }"
       >
         <div class="card-corner">04</div>
         <p class="quote-text">
-          KEEP THE BALL OUT OF THE <span class="gold">NET</span>
+          CREATIVE SKILLS: COMPOSITION, AUDIO PRODUCTION, SOUND DESIGN, BRANDING, LIVE <span class="gold">PERFORMANCE</span>
         </p>
       </article>
 
       <article
         class="scroll-card image-card"
         data-section-anchor="351"
-        :style="{ top: '350vh', right: '8vw' }"
+        :style="{ top: '284vh', right: '8vw' }"
       >
         <div class="img-rect" style="width: 540px; height: 300px;">
           <!-- <span class="img-tag">PHOTO 03</span> -->
-          <img src="/images/band1.jpg" alt="" class="img-rect-img" />
+          <img src="/images/engineer.jpg" alt="" class="img-rect-img" />
         </div>
-        <div class="img-caption">Minneapolis, MN</div>
+        <div class="img-caption">Selected Work: Creative productions, technical projects, and digital experiences.</div>
       </article>
 
       <article
         class="scroll-card quote-card"
         data-section-anchor="351"
-        :style="{ top: '352vh', left: '5vw', width: '260px' }"
+        :style="{ top: '312vh', left: '5vw', width: '260px' }"
       >
         <div class="card-corner">05</div>
         <p class="quote-text">
-          THE STORY CONTINUES — <span class="gold">SCROLL</span>
+          LET'S BUILD SOMETHING <span class="gold">MEANINGFUL</span>
         </p>
+      </article>
+
+      <article
+        class="scroll-card quote-card"
+        data-section-anchor="351"
+        :style="{ top: '292vh', left: '5vw', width: '330px' }"
+      >
+        <div class="card-corner">06</div>
+        <p class="quote-text">
+          PROFESSIONAL, CREATIVE, AND TECHNICALLY SHARP — A UNIQUE CREATIVE
+          <span class="gold">VISION</span>
+        </p>
+      </article>
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="351"
+        :style="{ top: '342vh', left: '5vw' }"
+      >
+        <div class="img-rect" style="width: 540px; height: 300px;">
+          <img src="/images/band3.jpg" alt="" class="img-rect-img" />
+        </div>
+        <div class="img-caption">Full stack web development, APIs, cloud infrastructure, and technical consulting.</div>
+      </article>
+
+      <article
+        class="scroll-card stats-card"
+        data-section-anchor="351"
+        :style="{ top: '342vh', left: '67vw', width: '300px' }"
+      >
+        <div class="stats-head">
+          <span>Short Bio</span>
+          <span class="stats-arrow" aria-hidden="true">↗</span>
+        </div>
+        <div class="stats-label">Minneapolis-based</div>
+        <div class="stats-value">Combining artistic vision with technical expertise to build meaningful digital experiences.</div>
       </article>
     </div>
   </main>
@@ -324,6 +387,8 @@ onBeforeUnmount(() => {
 .hero {
   position: relative;
   width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
   height: 400vh;
   background: #0a0a0a;
   color: #fff;
@@ -734,24 +799,90 @@ img {
 }
 
 @media (max-width: 720px) {
+  .hero {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    padding: 1rem 0 2rem;
+  }
+
+  .giant-name {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none !important;
+    font-size: clamp(72px, 24vw, 120px);
+    text-align: center;
+    margin: 0 auto 1rem;
+    z-index: 1;
+  }
+
+  .sidebar,
+  .meta-top-right,
+  .spotify {
+    display: none;
+  }
+
+  .meta-top-left {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    letter-spacing: 0.12em;
+  }
+
+  .scroll-progress {
+    display: none;
+  }
+
+  .scroll-content {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: min(92vw, 560px);
+    margin: 0 auto;
+    pointer-events: auto;
+  }
+
+  .scroll-card {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .scroll-card::after {
+    display: none;
+  }
+
   .quote-card,
   .stats-card {
-    width: 78vw !important;
-    left: 5vw !important;
-    right: auto !important;
+    padding: 1rem;
   }
+
   .scroll-card.centered {
-    left: 5vw;
-    margin-left: 0;
-    width: 78vw !important;
+    margin-left: 0 !important;
   }
+
   .image-card {
-    left: 5vw !important;
-    right: auto !important;
+    display: block;
   }
+
   .image-card .img-rect {
-    width: 78vw !important;
-    height: 80vw !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+  }
+
+  .img-caption {
+    font-size: 12px;
   }
 }
 </style>

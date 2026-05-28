@@ -115,6 +115,7 @@ onBeforeUnmount(() => {
   height: 8px;
   border-radius: 50%;
   background: #ffffff;
+  mix-blend-mode: difference;
   pointer-events: none;
   z-index: 9999;
   will-change: transform, opacity;
@@ -128,6 +129,8 @@ onBeforeUnmount(() => {
   width: 40px;
   height: 40px;
   border: 1px solid #ffffff;
+  background: transparent;
+  mix-blend-mode: difference;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
