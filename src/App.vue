@@ -1,12 +1,13 @@
 <script setup>
-import HeroSection from './components/HeroSection.vue'
 import CustomCursor from './components/CustomCursor.vue'
+import SlideMenu from './components/SlideMenu.vue'
 </script>
 
 <template>
   <div class="app-root">
     <CustomCursor />
-    <HeroSection />
+    <SlideMenu />
+    <RouterView />
   </div>
 </template>
 
