@@ -11,10 +11,10 @@ let rafId = 0
 let sectionsByAnchor = new Map()
 
 const revealedSections = new Set()
-/** Total wipe duration per card (overlay opacity/mask 0% → 100% transparent, left → right). */
-const REVEAL_DURATION_MS = 2500
-/** Left-to-right order when a section has multiple cards (kept small vs. wipe time). */
-const STAGGER_MS = 80
+/** Total reveal duration per card (slide + wipe, hidden → shown). */
+const REVEAL_DURATION_MS = 1050
+/** Left-to-right stagger when a section has multiple cards. */
+const STAGGER_MS = 120
 const REVEAL_FROM_BOTTOM_VH = 0.2
 
 const YOUTUBE_VIDEO_ID = '9iHbUniBWqI'
@@ -139,17 +139,17 @@ onBeforeUnmount(() => {
     <h1 ref="nameEl" class="giant-name" aria-label="Thomas">Thomas</h1>
 
     <aside class="sidebar" aria-label="Primary">
-      <a href="#" class="logo-mark" data-hover aria-label="Thomas home">
+      <RouterLink to="/" class="logo-mark" data-hover aria-label="Thomas home">
         <img src="/images/logo.png" alt="" width="28" height="28" />
-      </a>
-      <a href="#" class="circle-icon" data-hover aria-label="Information">
+      </RouterLink>
+      <RouterLink to="/contact" class="circle-icon" data-hover aria-label="Contact">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 8v4M12 16h0" stroke-linecap="round" />
         </svg>
-      </a>
+      </RouterLink>
       <span class="vline" aria-hidden="true" />
-      <a href="#" class="side-text" data-hover>EN</a>
+      <RouterLink to="/contact" class="side-text" data-hover>CONTACT</RouterLink>
     </aside>
 
     <a href="https://youtu.be/9iHbUniBWqI?si=1wlnjetebWr0HsJ2" target="_blank" class="spotify" data-hover>
@@ -199,10 +199,11 @@ onBeforeUnmount(() => {
     </div> -->
 
     <div ref="scrollLayer" class="scroll-content">
+      <!-- Hero -->
       <article
         class="scroll-card quote-card"
         data-section-anchor="5"
-        :style="{ top: '5vh', left: '5vw', width: '240px' }"
+        :style="{ top: '5vh', left: '5vw', width: '260px' }"
       >
         <div class="card-corner">01</div>
         <p class="quote-text">
@@ -213,91 +214,188 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card stats-card"
         data-section-anchor="5"
-        :style="{ top: '5vh', right: '5vw', width: '240px' }"
+        :style="{ top: '5vh', right: '5vw', width: '280px' }"
       >
         <div class="stats-head">
-          <span>Hero Section</span>
+          <span>Hero</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
         <div class="stats-label">Building Sound, Stories, and Software</div>
-        <div class="stats-value">Professional Musician & Software Engineer</div>
+        <div class="stats-value">Professional Musician &amp; Software Engineer</div>
       </article>
 
+      <!-- Music & band images -->
       <article
         class="scroll-card image-card"
-        data-section-anchor="85"
-        :style="{ top: '55vh', left: '5vw' }"
+        data-section-anchor="40"
+        :style="{ top: '32vh', left: '5vw' }"
       >
-        <div class="img-rect" style="width: 600px; height: 320px;">
+        <div class="img-rect" style="width: 560px; height: 420px;">
           <span class="img-tag">ABOUT</span>
-          <img src="/images/band1.jpg" alt="" class="img-rect-img" />
+          <img src="/images/band1.jpg" alt="Live music performance" class="img-rect-img" />
         </div>
-        <div class="img-caption">A multidisciplinary creator working at the intersection of music and technology.</div>
+        <div class="img-caption">
+          Multidisciplinary creator at the intersection of music, technology, and digital innovation.
+        </div>
       </article>
 
       <article
         class="scroll-card quote-card"
-        data-section-anchor="85"
-        :style="{ top: '55vh', right: '8vw', width: '280px' }"
+        data-section-anchor="40"
+        :style="{ top: '52vh', right: '6vw', width: '300px' }"
       >
         <div class="card-corner">02</div>
         <p class="quote-text">
-          I CREATE IMMERSIVE MUSIC EXPERIENCES, DIGITAL PRODUCTS, AND <span class="gold">SOFTWARE</span>
+          IMMERSIVE MUSIC, LIVE PERFORMANCE, AND ARTISTIC COLLABORATIONS THAT BRING
+          <span class="gold">EMOTION</span> TO EVERY PROJECT
         </p>
       </article>
 
       <article
-        class="scroll-card image-card"
-        data-section-anchor="130"
-        :style="{ top: '108vh', right: '6vw' }"
-      >
-        <div class="img-rect" style="width: 320px; height: 420px;">
-          <span class="img-tag">ME</span>
-          <img src="/images/me.jpg" alt="" class="img-rect-img" />
-        </div>
-        <div class="img-caption">An artist and engineer blending creativity, performance, and technology.</div>
-      </article>
-
-      <article
         class="scroll-card stats-card"
-        data-section-anchor="174"
-        :style="{ top: '108vh', left: '5vw', width: '260px' }"
+        data-section-anchor="95"
+        :style="{ top: '88vh', left: '5vw', width: '280px' }"
       >
         <div class="stats-head">
           <span>Services</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">Music & Creative Production</div>
-        <div class="stats-value">Music Production · Audio Engineering · Sound Design · Mixing & Mastering</div>
+        <div class="stats-label">Music &amp; Creative Production</div>
+        <div class="stats-value">
+          Music Production · Audio Engineering · Sound Design · Live Performance ·
+          Mixing &amp; Mastering · Creative Direction · Original Composition
+        </div>
       </article>
 
       <article
         class="scroll-card image-card"
-        data-section-anchor="174"
-        :style="{ top: '150vh', left: '5vw' }"
+        data-section-anchor="95"
+        :style="{ top: '95vh', right: '5vw' }"
       >
-        <div class="img-rect" style="width: 280px; height: 360px;">
-          <span class="img-tag">SOFTWARE ENGINEERING</span>
-          <img src="/images/band2.jpg" alt="" class="img-rect-img" />
+        <div class="img-rect" style="width: 300px; height: 400px;">
+          <span class="img-tag">MUSIC</span>
+          <img src="/images/band2.jpg" alt="Band performance" class="img-rect-img" />
         </div>
-        <div class="img-caption">Full stack web development, APIs, cloud infrastructure, and technical consulting.</div>
+        <div class="img-caption">
+          From live production and audio engineering to original compositions and multimedia experiences.
+        </div>
       </article>
 
       <article
-        class="scroll-card quote-card centered"
-        data-section-anchor="174"
-        :style="{ top: '178vh', width: '300px' }"
+        class="scroll-card quote-card"
+        data-section-anchor="145"
+        :style="{ top: '138vh', right: '7vw', width: '290px' }"
       >
         <div class="card-corner">03</div>
         <p class="quote-text">
-          CREATIVITY MEETS <span class="gold">ENGINEERING</span>
+          MUSIC PRODUCTION, DIGITAL AUDIO, LIVE STREAMING, AND CREATIVE BRANDING WITH
+          <span class="gold">ARTISTIC</span> IDENTITY
         </p>
       </article>
 
       <article
+        class="scroll-card image-card"
+        data-section-anchor="145"
+        :style="{ top: '145vh', left: '5vw' }"
+      >
+        <div class="img-rect" style="width: 480px; height: 320px;">
+          <span class="img-tag">EXPERIENCE</span>
+          <img src="/images/band3.jpg" alt="Creative production" class="img-rect-img" />
+        </div>
+        <div class="img-caption">
+          Creative &amp; technical experience across music production, live media, and digital experiences.
+        </div>
+      </article>
+
+      <article
         class="scroll-card stats-card"
-        data-section-anchor="261"
-        :style="{ top: '208vh', left: '5vw', width: '300px' }"
+        data-section-anchor="195"
+        :style="{ top: '182vh', left: '5vw', width: '300px' }"
+      >
+        <div class="stats-head">
+          <span>Featured Skills</span>
+          <span class="stats-arrow" aria-hidden="true">↗</span>
+        </div>
+        <div class="stats-label">Creative Skills</div>
+        <div class="stats-value">
+          Music Composition · Audio Production · Sound Design · Digital Media ·
+          Creative Branding · Visual Storytelling · Live Performance · Multimedia
+        </div>
+      </article>
+
+      <article
+        class="scroll-card quote-card centered"
+        data-section-anchor="195"
+        :style="{ top: '198vh', width: '320px' }"
+      >
+        <div class="card-corner">04</div>
+        <p class="quote-text">
+          MUSIC TEACHES EMOTION, RHYTHM, AND STORYTELLING — CREATIVITY MEETS
+          <span class="gold">ENGINEERING</span>
+        </p>
+      </article>
+
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="245"
+        :style="{ top: '228vh', right: '6vw' }"
+      >
+        <div class="img-rect" style="width: 520px; height: 300px;">
+          <span class="img-tag">PORTFOLIO</span>
+          <img src="/images/band4.jpg" alt="Selected creative work" class="img-rect-img" />
+        </div>
+        <div class="img-caption">
+          Selected work: creative productions and music experiences built with innovation and artistic identity.
+        </div>
+      </article>
+
+      <article
+        class="scroll-card quote-card"
+        data-section-anchor="245"
+        :style="{ top: '248vh', left: '5vw', width: '320px' }"
+      >
+        <div class="card-corner">05</div>
+        <p class="quote-text">
+          “PROFESSIONAL, CREATIVE, AND TECHNICALLY SHARP — A UNIQUE
+          <span class="gold">VISION</span>”
+        </p>
+      </article>
+
+      <!-- Software engineering & engineer images -->
+      <article
+        class="scroll-card stats-card"
+        data-section-anchor="295"
+        :style="{ top: '278vh', right: '5vw', width: '280px' }"
+      >
+        <div class="stats-head">
+          <span>Services</span>
+          <span class="stats-arrow" aria-hidden="true">↗</span>
+        </div>
+        <div class="stats-label">Software Engineering</div>
+        <div class="stats-value">
+          Full Stack Web Development · Custom Software · Streaming Platforms ·
+          API Integration · Cloud Infrastructure · UI/UX · Performance Optimization
+        </div>
+      </article>
+
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="295"
+        :style="{ top: '285vh', left: '5vw' }"
+      >
+        <div class="img-rect" style="width: 300px; height: 380px;">
+          <span class="img-tag">ENGINEERING</span>
+          <img src="/images/engineer0.jpg" alt="Software engineering" class="img-rect-img" />
+        </div>
+        <div class="img-caption">
+          Modern digital solutions with performance, scalability, and user experience at the core.
+        </div>
+      </article>
+
+      <article
+        class="scroll-card stats-card"
+        data-section-anchor="345"
+        :style="{ top: '328vh', left: '5vw', width: '300px' }"
       >
         <div class="stats-head">
           <span>Featured Skills</span>
@@ -305,80 +403,78 @@ onBeforeUnmount(() => {
         </div>
         <div class="stats-label">Technical Skills</div>
         <div class="stats-value">
-          JavaScript / Node.js <br> React <br> API Development <br> Cloud &amp; Server Infrastructure <br>
-          Database Systems <br> Real-Time Streaming <br> Frontend &amp; Backend Development <br>
-          Performance Optimization
+          JavaScript / Node.js <br> Python <br> API Development <br> Cloud &amp; Server Infrastructure <br>
+          AI Integration <br> Database Systems <br> Real-Time Streaming <br> Frontend &amp; Backend <br> Performance Optimization
         </div>
       </article>
 
       <article
         class="scroll-card quote-card"
-        data-section-anchor="261"
-        :style="{ top: '222vh', right: '7vw', width: '300px' }"
+        data-section-anchor="345"
+        :style="{ top: '338vh', right: '6vw', width: '290px' }"
       >
-        <div class="card-corner">04</div>
+        <div class="card-corner">06</div>
         <p class="quote-text">
-          CREATIVE SKILLS: COMPOSITION, AUDIO PRODUCTION, SOUND DESIGN, BRANDING, LIVE <span class="gold">PERFORMANCE</span>
+          WEB APPLICATIONS, CUSTOM BUSINESS SOFTWARE, BACKEND SYSTEMS, AND SCALABLE
+          <span class="gold">CLOUD</span> SERVICES
         </p>
       </article>
 
       <article
         class="scroll-card image-card"
-        data-section-anchor="351"
-        :style="{ top: '284vh', right: '8vw' }"
+        data-section-anchor="395"
+        :style="{ top: '365vh', right: '5vw' }"
       >
-        <div class="img-rect" style="width: 540px; height: 300px;">
-          <!-- <span class="img-tag">PHOTO 03</span> -->
-          <img src="/images/engineer.jpg" alt="" class="img-rect-img" />
+        <div class="img-rect" style="width: 500px; height: 300px;">
+          <span class="img-tag">SELECTED WORK</span>
+          <img src="/images/engineer1.jpg" alt="Technical project" class="img-rect-img" />
         </div>
-        <div class="img-caption">Selected Work: Creative productions, technical projects, and digital experiences.</div>
+        <div class="img-caption">
+          Technical projects and software solutions — the fusion of creative artistry and modern engineering.
+        </div>
+      </article>
+
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="395"
+        :style="{ top: '385vh', left: '5vw' }"
+      >
+        <div class="img-rect" style="width: 280px; height: 340px;">
+          <span class="img-tag">CONTACT</span>
+          <img src="/images/engineer2.jpg" alt="Collaboration" class="img-rect-img" />
+        </div>
+        <div class="img-caption">
+          Minneapolis, Minnesota — music projects, software development, consulting, and live production.
+        </div>
       </article>
 
       <article
         class="scroll-card quote-card"
-        data-section-anchor="351"
-        :style="{ top: '312vh', left: '5vw', width: '260px' }"
+        data-section-anchor="395"
+        :style="{ top: '355vh', left: '5vw', width: '260px' }"
       >
-        <div class="card-corner">05</div>
+        <div class="card-corner">07</div>
         <p class="quote-text">
           LET'S BUILD SOMETHING <span class="gold">MEANINGFUL</span>
         </p>
       </article>
 
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="351"
-        :style="{ top: '292vh', left: '5vw', width: '330px' }"
-      >
-        <div class="card-corner">06</div>
-        <p class="quote-text">
-          PROFESSIONAL, CREATIVE, AND TECHNICALLY SHARP — A UNIQUE CREATIVE
-          <span class="gold">VISION</span>
-        </p>
-      </article>
-      <article
-        class="scroll-card image-card"
-        data-section-anchor="351"
-        :style="{ top: '342vh', left: '5vw' }"
-      >
-        <div class="img-rect" style="width: 540px; height: 300px;">
-          <img src="/images/band3.jpg" alt="" class="img-rect-img" />
-        </div>
-        <div class="img-caption">Full stack web development, APIs, cloud infrastructure, and technical consulting.</div>
-      </article>
-
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="351"
-        :style="{ top: '342vh', left: '67vw', width: '300px' }"
+      <RouterLink
+        to="/contact"
+        class="scroll-card stats-card contact-link-card"
+        data-section-anchor="395"
+        :style="{ top: '355vh', left: '32vw', width: '300px' }"
+        data-hover
       >
         <div class="stats-head">
-          <span>Short Bio</span>
+          <span>Contact</span>
           <span class="stats-arrow" aria-hidden="true">↗</span>
         </div>
-        <div class="stats-label">Minneapolis-based</div>
-        <div class="stats-value">Combining artistic vision with technical expertise to build meaningful digital experiences.</div>
-      </article>
+        <div class="stats-label">Boxcar von productions — Myth Anthropix</div>
+        <div class="stats-value">
+          Immersive music, innovative software, and meaningful digital experiences — Minneapolis-based.
+        </div>
+      </RouterLink>
     </div>
   </main>
 </template>
@@ -389,7 +485,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 1680px;
   margin-inline: auto;
-  height: 400vh;
+  height: 450vh;
   background: #0a0a0a;
   color: #fff;
   overflow: hidden;
@@ -601,6 +697,48 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   overflow: hidden;
   isolation: isolate;
+  opacity: 0;
+  transform: translate3d(-72px, 0, 0) scale(0.96);
+  filter: blur(8px);
+  transition:
+    transform var(--reveal-duration, 1s) cubic-bezier(0.18, 1, 0.32, 1),
+    opacity calc(var(--reveal-duration, 1s) * 0.82) ease-out,
+    filter calc(var(--reveal-duration, 1s) * 0.9) ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity, filter;
+}
+
+.scroll-card.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+.scroll-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  background: linear-gradient(
+    110deg,
+    rgba(201, 168, 76, 0) 0%,
+    rgba(201, 168, 76, 0.42) 42%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(201, 168, 76, 0.42) 58%,
+    rgba(201, 168, 76, 0) 100%
+  );
+  transform: translateX(-130%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform calc(var(--reveal-duration, 1s) * 0.95) cubic-bezier(0.2, 0.9, 0.25, 1),
+    opacity calc(var(--reveal-duration, 1s) * 0.4) ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.scroll-card.is-revealed::before {
+  transform: translateX(130%);
+  opacity: 1;
 }
 
 .scroll-card::after {
@@ -622,8 +760,8 @@ onBeforeUnmount(() => {
     #000 var(--reveal-p)
   );
   transition:
-    --reveal-p var(--reveal-duration, 1.5s) cubic-bezier(0.22, 1, 0.36, 1),
-    opacity var(--reveal-duration, 1.5s) cubic-bezier(0.22, 1, 0.36, 1);
+    --reveal-p var(--reveal-duration, 1s) cubic-bezier(0.22, 1, 0.36, 1),
+    opacity calc(var(--reveal-duration, 1s) * 0.92) cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: var(--reveal-delay, 0ms);
   will-change: --reveal-p, opacity;
   pointer-events: none;
@@ -737,6 +875,17 @@ onBeforeUnmount(() => {
   font-size: 18px;
   line-height: 1.25;
   letter-spacing: -0.01em;
+}
+
+.contact-link-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: filter 0.3s ease;
+}
+
+.contact-link-card:hover {
+  filter: brightness(1.05);
 }
 
 .image-card {
