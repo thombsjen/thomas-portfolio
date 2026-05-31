@@ -1,0 +1,100 @@
+/**
+ * Film & video gallery — update youtubeId, posters, and captions as your reel grows.
+ *
+ * youtubeId: the ID from https://www.youtube.com/watch?v=VIDEO_ID
+ * embed: true = inline YouTube player; false = poster thumbnail linking to YouTube
+ */
+export const movieConfig = {
+  location: 'Minneapolis, Minnesota',
+}
+
+export const movieGallery = [
+  {
+    anchor: '55',
+    position: { top: '35vh', left: '5vw' },
+    rect: { width: '560px', height: '315px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/band1.jpg',
+    tag: 'FEATURED',
+    title: 'Myth Anthropix — Visual Reel',
+    caption: 'Featured film — live performance, studio sessions, and creative direction.',
+    embed: true,
+  },
+  {
+    anchor: '55',
+    position: { top: '52vh', right: '5vw' },
+    rect: { width: '300px', height: '420px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/band2.jpg',
+    tag: 'LIVE',
+    title: 'Stage Sessions',
+    caption: 'Immersive live capture — sound, motion, and atmosphere on film.',
+    embed: false,
+  },
+  {
+    anchor: '55',
+    position: { top: '48vh', right: '8vw' },
+    rect: { width: '280px', height: '360px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/band3.jpg',
+    tag: 'STUDIO',
+    title: 'Behind the Lens',
+    caption: 'Production and collaboration — from concept to final cut.',
+    embed: false,
+  },
+  {
+    anchor: '105',
+    position: { top: '88vh', left: '5vw' },
+    rect: { width: '480px', height: '270px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/band4.jpg',
+    tag: 'DOCUMENTARY',
+    title: 'Creative Process',
+    caption: 'Documentary-style coverage of music and media projects.',
+    embed: true,
+  },
+  {
+    anchor: '105',
+    position: { top: '92vh', right: '5vw' },
+    rect: { width: '320px', height: '400px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/photo_2026-05-28_17-10-30.jpg',
+    tag: 'PROMO',
+    title: 'Artist Promo',
+    caption: 'Short-form promos and visual identity for artists and brands.',
+    embed: false,
+  },
+  {
+    anchor: '105',
+    position: { top: '112vh', left: '5vw' },
+    rect: { width: '400px', height: '225px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/photo_2026-05-28_17-10-33.jpg',
+    tag: 'EVENT',
+    title: 'Event Coverage',
+    caption: 'Multi-camera event films and live stream production.',
+    embed: false,
+  },
+  {
+    anchor: '155',
+    position: { top: '148vh', left: '5vw' },
+    rect: { width: '520px', height: '293px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/photo_2026-05-28_17-10-40.jpg',
+    tag: 'SELECTED',
+    title: 'Selected Work',
+    caption: 'Curated reel — narrative film and visual storytelling.',
+    embed: true,
+  },
+  {
+    anchor: '155',
+    position: { top: '152vh', right: '5vw' },
+    rect: { width: '280px', height: '360px' },
+    youtubeId: '9iHbUniBWqI',
+    poster: '/images/111.jpg',
+    tag: 'RAW',
+    title: 'Unfiltered Cuts',
+    caption: 'Experimental edits — texture, rhythm, and raw visual energy.',
+    embed: false,
+  },
+]

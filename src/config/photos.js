@@ -1,0 +1,90 @@
+/**
+ * Photo gallery — update src, tags, and captions as your portfolio grows.
+ */
+export const photoConfig = {
+  location: 'Minneapolis, Minnesota',
+}
+
+export const photoGallery = [
+  {
+    anchor: '55',
+    position: { top: '35vh', left: '5vw' },
+    rect: { width: '540px', height: '400px' },
+    src: '/images/band1.jpg',
+    alt: 'Live music performance on stage',
+    tag: 'LIVE',
+    caption: 'Stage energy — live sound, performance, and atmosphere.',
+  },
+  {
+    anchor: '55',
+    position: { top: '52vh', right: '5vw' },
+    rect: { width: '300px', height: '420px' },
+    src: '/images/band2.jpg',
+    alt: 'Band performance',
+    tag: 'STAGE',
+    caption: 'Immersive moments from the studio and the road.',
+  },
+  {
+    anchor: '55',
+    position: { top: '48vh', right: '8vw' },
+    rect: { width: '280px', height: '360px' },
+    src: '/images/photo_2026-05-28_17-10-18.jpg',
+    alt: 'Portrait session',
+    tag: 'PORTRAIT',
+    caption: 'Visual identity and creative direction.',
+  },
+  {
+    anchor: '105',
+    position: { top: '88vh', left: '5vw' },
+    rect: { width: '480px', height: '320px' },
+    src: '/images/band3.jpg',
+    alt: 'Creative production session',
+    tag: 'STUDIO',
+    caption: 'Behind the scenes — production and collaboration.',
+  },
+  {
+    anchor: '105',
+    position: { top: '92vh', right: '5vw' },
+    rect: { width: '320px', height: '400px' },
+    src: '/images/photo_2026-05-28_17-10-30.jpg',
+    alt: 'Studio session',
+    tag: 'SESSION',
+    caption: 'Light, texture, and mood in the studio.',
+  },
+  {
+    anchor: '105',
+    position: { top: '112vh', left: '5vw' },
+    rect: { width: '400px', height: '300px' },
+    src: '/images/band4.jpg',
+    alt: 'Selected creative work',
+    tag: 'BEHIND',
+    caption: 'Selected work from live and studio projects.',
+  },
+  {
+    anchor: '105',
+    position: { top: '118vh', right: '5vw' },
+    rect: { width: '300px', height: '380px' },
+    src: '/images/photo_2026-05-28_17-10-33.jpg',
+    alt: 'Live moment capture',
+    tag: 'MOMENTS',
+    caption: 'Candid frames from performances and events.',
+  },
+  {
+    anchor: '155',
+    position: { top: '148vh', left: '5vw' },
+    rect: { width: '520px', height: '340px' },
+    src: '/images/photo_2026-05-28_17-10-40.jpg',
+    alt: 'Featured photograph',
+    tag: 'SELECTED',
+    caption: 'Featured selection — visual stories from the archive.',
+  },
+  {
+    anchor: '155',
+    position: { top: '152vh', right: '5vw' },
+    rect: { width: '280px', height: '360px' },
+    src: '/images/111.jpg',
+    alt: 'Creative photograph',
+    tag: 'RAW',
+    caption: 'Unfiltered frames — texture, contrast, and tone.',
+  },
+]
