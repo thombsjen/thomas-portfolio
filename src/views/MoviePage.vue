@@ -1,131 +1,26 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
 import ParticleCanvas from '../components/ParticleCanvas.vue'
-import { movieConfig, movieGallery } from '../config/movies.js'
+import { useScrollGallery } from '../composables/useScrollGallery.js'
+import { movieConfig, movieSections } from '../config/movies.js'
+import '../styles/scroll-gallery.css'
 
-const scrollLayer = ref(null)
-const progressEl = ref(null)
-
-let scrollHandler = null
-let rafId = 0
-let sectionsByAnchor = new Map()
-
-const revealedSections = new Set()
-const REVEAL_DURATION_MS = 1050
-const STAGGER_MS = 120
-const REVEAL_FROM_BOTTOM_VH = 0.2
-const MOBILE_BREAKPOINT = 720
+const { scrollLayer, progressEl } = useScrollGallery('movie-page')
 
 const youtubeEmbedSrc = (id) =>
   `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`
 
 const youtubeWatchUrl = (id) => `https://youtu.be/${id}`
 
-const parseTopVh = (card) => {
-  const top = getComputedStyle(card).top
-  if (!top || top === 'auto') return Infinity
-  const match = top.match(/^([\d.]+)vh$/)
-  return match ? Number(match[1]) : Infinity
-}
+const richText = (html) =>
+  html.replace(/<gold>/g, '<span class="gold">').replace(/<\/gold>/g, '</span>')
 
-const revealLineY = () =>
-  window.innerHeight * (1 - REVEAL_FROM_BOTTOM_VH / 100)
+const mediaStyle = (ratio) => ({ '--media-ratio': ratio })
 
-const shouldRevealSection = (triggerCard) => {
-  const { top, bottom } = triggerCard.getBoundingClientRect()
-  const line = revealLineY()
-  return top <= line && bottom > 0
-}
-
-const revealSection = (anchor, cards) => {
-  if (revealedSections.has(anchor)) return
-  revealedSections.add(anchor)
-
-  const sorted = [...cards].sort(
-    (a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left,
-  )
-
-  sorted.forEach((card, index) => {
-    card.style.setProperty('--reveal-duration', `${REVEAL_DURATION_MS}ms`)
-    card.style.setProperty('--reveal-delay', `${index * STAGGER_MS}ms`)
-  })
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      sorted.forEach((card) => card.classList.add('is-revealed'))
-    })
-  })
-}
-
-const updateCardReveals = () => {
-  for (const [anchor, cards] of sectionsByAnchor) {
-    if (revealedSections.has(anchor)) continue
-    const trigger = cards.reduce((a, b) => (parseTopVh(a) <= parseTopVh(b) ? a : b))
-    if (shouldRevealSection(trigger)) revealSection(anchor, cards)
-  }
-}
-
-const onScroll = () => {
-  const sy = window.scrollY || window.pageYOffset || 0
-
-  updateCardReveals()
-
-  if (progressEl.value) {
-    const max = (document.documentElement.scrollHeight - window.innerHeight) || 1
-    const p = Math.max(0, Math.min(1, sy / max))
-    progressEl.value.style.transform = `scaleX(${p})`
-  }
-}
-
-const setupCardSections = () => {
-  const root = scrollLayer.value?.closest('.movie-page')
-  if (!root) return
-
-  sectionsByAnchor = new Map()
-  for (const card of root.querySelectorAll('.scroll-content .scroll-card')) {
-    const anchor = card.dataset.sectionAnchor
-    if (!sectionsByAnchor.has(anchor)) sectionsByAnchor.set(anchor, [])
-    sectionsByAnchor.get(anchor).push(card)
-  }
-}
-
-onMounted(() => {
-  const root = scrollLayer.value?.closest('.movie-page')
-  const isMobile = window.innerWidth <= MOBILE_BREAKPOINT
-
-  scrollHandler = () => {
-    if (rafId) return
-    rafId = window.requestAnimationFrame(() => {
-      rafId = 0
-      onScroll()
-    })
-  }
-  window.addEventListener('scroll', scrollHandler, { passive: true })
-  window.addEventListener('resize', scrollHandler, { passive: true })
-  setupCardSections()
-
-  if (isMobile && root) {
-    root.querySelectorAll('.scroll-content .scroll-card').forEach((card) => {
-      card.classList.add('is-revealed')
-    })
-  }
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(onScroll)
-  })
-})
-
-onBeforeUnmount(() => {
-  if (rafId) cancelAnimationFrame(rafId)
-  if (scrollHandler) {
-    window.removeEventListener('scroll', scrollHandler)
-    window.removeEventListener('resize', scrollHandler)
-  }
-})
+const spanClass = (span) => (span ? `gallery-item--span-${span}` : undefined)
 </script>
 
 <template>
-  <main class="movie-page">
+  <main class="movie-page gallery-page">
     <ParticleCanvas />
 
     <aside class="sidebar" aria-label="Primary">
@@ -162,221 +57,106 @@ onBeforeUnmount(() => {
       </p>
     </header>
 
-    <div ref="scrollLayer" class="scroll-content">
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="10"
-        :style="{ top: '8vh', left: '5vw', width: '280px' }"
+    <div ref="scrollLayer" class="gallery-body">
+      <section
+        v-for="section in movieSections"
+        :key="section.id"
+        class="gallery-section"
       >
-        <div class="card-corner">01</div>
-        <p class="quote-text">
-          MOTION, <span class="gold">SOUND</span>, AND STORY — EVERY FRAME HAS A RHYTHM
-        </p>
-      </article>
-
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="10"
-        :style="{ top: '8vh', right: '5vw', width: '300px' }"
-      >
-        <div class="stats-head">
-          <span>Reel</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
+        <div v-if="section.cards" class="section-cards">
+          <article class="quote-card gallery-reveal">
+            <div class="card-corner">{{ section.cards.quote.corner }}</div>
+            <p class="quote-text" v-html="richText(section.cards.quote.text)" />
+          </article>
+          <article class="stats-card gallery-reveal">
+            <div class="stats-head">
+              <span>{{ section.cards.stats.heading }}</span>
+              <span class="stats-arrow" aria-hidden="true">↗</span>
+            </div>
+            <div class="stats-label">{{ section.cards.stats.label }}</div>
+            <div class="stats-value">{{ section.cards.stats.value }}</div>
+          </article>
         </div>
-        <div class="stats-label">Boxcar von productions — Myth Anthropix</div>
-        <div class="stats-value">
-          Music videos, live films, documentaries, and creative direction for visual media.
+
+        <div v-if="section.band" class="section-band">
+          <article class="quote-card gallery-reveal">
+            <div class="card-corner">{{ section.band.corner }}</div>
+            <p class="quote-text" v-html="richText(section.band.text)" />
+          </article>
         </div>
-      </article>
 
-      <article
-        v-for="movie in movieGallery"
-        :key="movie.tag + movie.title"
-        class="scroll-card video-card"
-        :data-section-anchor="movie.anchor"
-        :style="movie.position"
-      >
-        <div class="video-rect" :style="movie.rect">
-          <span class="img-tag">{{ movie.tag }}</span>
-
-          <div v-if="movie.embed" class="youtube-wrap">
-            <iframe
-              class="youtube-iframe"
-              :src="youtubeEmbedSrc(movie.youtubeId)"
-              :title="movie.title"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowfullscreen
-              loading="lazy"
-            />
-          </div>
-
-          <a
-            v-else
-            :href="youtubeWatchUrl(movie.youtubeId)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="video-poster-link"
-            data-hover
-            :aria-label="`Watch ${movie.title} on YouTube`"
+        <div
+          v-if="section.videos?.length"
+          class="gallery-grid"
+          :class="`gallery-grid--${section.grid}`"
+        >
+          <article
+            v-for="video in section.videos"
+            :key="video.title + video.tag"
+            class="gallery-item video-card gallery-reveal"
+            :class="spanClass(video.span)"
           >
-            <img :src="movie.poster" :alt="movie.title" class="video-poster-img" loading="lazy" />
-            <span class="play-btn" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </span>
-          </a>
+            <div class="video-rect media-rect" :style="mediaStyle(video.ratio)">
+              <span class="img-tag">{{ video.tag }}</span>
+
+              <div v-if="video.embed" class="youtube-wrap">
+                <iframe
+                  class="youtube-iframe"
+                  :src="youtubeEmbedSrc(video.youtubeId)"
+                  :title="video.title"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                  loading="lazy"
+                />
+              </div>
+
+              <a
+                v-else
+                :href="youtubeWatchUrl(video.youtubeId)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="video-poster-link"
+                data-hover
+                :aria-label="`Watch ${video.title} on YouTube`"
+              >
+                <img :src="video.poster" :alt="video.title" class="video-poster-img" loading="lazy" />
+                <span class="play-btn" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              </a>
+            </div>
+            <div class="video-title">{{ video.title }}</div>
+            <div class="img-caption">{{ video.caption }}</div>
+          </article>
         </div>
-        <div class="video-title">{{ movie.title }}</div>
-        <div class="img-caption">{{ movie.caption }}</div>
-      </article>
 
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="55"
-        :style="{ top: '42vh', right: '6vw', width: '260px' }"
-      >
-        <div class="card-corner">02</div>
-        <p class="quote-text">
-          FROM <span class="gold">CONCEPT</span> TO FINAL CUT — CINEMATIC STORYTELLING AT EVERY SCALE
-        </p>
-      </article>
-
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="105"
-        :style="{ top: '105vh', left: '5vw', width: '280px' }"
-      >
-        <div class="stats-head">
-          <span>Focus</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
+        <div v-if="section.footer" class="section-footer">
+          <article class="quote-card gallery-reveal">
+            <div class="card-corner">{{ section.footer.quote.corner }}</div>
+            <p class="quote-text" v-html="richText(section.footer.quote.text)" />
+          </article>
+          <article class="stats-card gallery-reveal">
+            <div class="stats-head">
+              <span>{{ section.footer.stats.heading }}</span>
+              <span class="stats-arrow" aria-hidden="true">↗</span>
+            </div>
+            <div class="stats-label">{{ section.footer.stats.label }}</div>
+            <div class="stats-value">{{ section.footer.stats.value }}</div>
+          </article>
         </div>
-        <div class="stats-label">Categories</div>
-        <div class="stats-value">
-          Music videos · Live performance films · Documentaries · Promo reels · Event coverage · Creative direction
-        </div>
-      </article>
+      </section>
 
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="105"
-        :style="{ top: '108vh', right: '7vw', width: '270px' }"
-      >
-        <div class="card-corner">03</div>
-        <p class="quote-text">
-          EDITING WITH <span class="gold">INTENT</span> — PACE, TONE, AND VISUAL NARRATIVE
-        </p>
-      </article>
-
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="155"
-        :style="{ top: '168vh', left: '5vw', width: '300px' }"
-      >
-        <div class="card-corner">04</div>
-        <p class="quote-text">
-          MINNEAPOLIS-BASED — MUSIC, MEDIA, AND <span class="gold">FILM</span> PRODUCTION
-        </p>
-      </article>
-
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="155"
-        :style="{ top: '168vh', right: '5vw', width: '280px' }"
-      >
-        <div class="stats-head">
-          <span>Collaborate</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
-        </div>
-        <div class="stats-label">Available for</div>
-        <div class="stats-value">
-          Music video production · Live event filming · Documentary · Promo content · Post-production
-        </div>
-      </article>
-
-      <article
-        class="scroll-card quote-card centered"
-        data-section-anchor="155"
-        :style="{ top: '178vh', width: '300px' }"
-      >
+      <footer class="gallery-footer gallery-reveal">
         <RouterLink to="/" class="back-link" data-hover>← Back to portfolio</RouterLink>
-      </article>
+      </footer>
     </div>
   </main>
 </template>
 
 <style scoped>
-.movie-page {
-  position: relative;
-  width: 100%;
-  max-width: 1680px;
-  margin-inline: auto;
-  height: 210vh;
-  background: #0a0a0a;
-  color: #fff;
-  overflow: hidden;
-}
-
-.page-header {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  text-align: center;
-  pointer-events: none;
-  user-select: none;
-  max-width: min(90vw, 640px);
-  opacity: 0;
-  animation: header-fade 1s ease-out 0.15s forwards;
-}
-
-@keyframes header-fade {
-  to {
-    opacity: 1;
-  }
-}
-
-.page-eyebrow {
-  margin: 0 0 0.5rem;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.page-title {
-  margin: 0;
-  font-family: 'Playfair Display', ui-serif, Georgia, serif;
-  font-weight: 800;
-  font-size: clamp(72px, 14vw, 140px);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  text-shadow: 0 0 80px rgba(201, 168, 76, 0.05);
-}
-
-.page-lead {
-  margin: 1rem 0 0;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.sidebar {
-  position: fixed;
-  left: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
 .logo-mark,
 .circle-icon,
 .side-text {
@@ -456,29 +236,6 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-.meta-top-left,
-.meta-top-right {
-  position: fixed;
-  top: 1.4rem;
-  z-index: 30;
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 500;
-  pointer-events: none;
-}
-
-.meta-top-left {
-  left: 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.meta-top-right {
-  right: 1.5rem;
-}
-
 .dot-live {
   width: 6px;
   height: 6px;
@@ -500,102 +257,12 @@ onBeforeUnmount(() => {
   }
 }
 
-.scroll-content {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-}
-
-@property --reveal-p {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 0%;
-}
-
-.scroll-card {
-  position: absolute;
-  pointer-events: auto;
-  overflow: hidden;
-  isolation: isolate;
-  opacity: 0;
-  transform: translate3d(-72px, 0, 0) scale(0.96);
-  filter: blur(8px);
-  transition:
-    transform var(--reveal-duration, 1s) cubic-bezier(0.18, 1, 0.32, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.82) ease-out,
-    filter calc(var(--reveal-duration, 1s) * 0.9) ease-out;
-  transition-delay: var(--reveal-delay, 0ms);
-  will-change: transform, opacity, filter;
-}
-
-.scroll-card.is-revealed {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: blur(0);
-}
-
-.scroll-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: 2;
-  background: linear-gradient(
-    110deg,
-    rgba(201, 168, 76, 0) 0%,
-    rgba(201, 168, 76, 0.42) 42%,
-    rgba(255, 255, 255, 0.22) 50%,
-    rgba(201, 168, 76, 0.42) 58%,
-    rgba(201, 168, 76, 0) 100%
-  );
-  transform: translateX(-130%);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    transform calc(var(--reveal-duration, 1s) * 0.95) cubic-bezier(0.2, 0.9, 0.25, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.4) ease-out;
-  transition-delay: var(--reveal-delay, 0ms);
-}
-
-.scroll-card.is-revealed::before {
-  transform: translateX(130%);
-  opacity: 1;
-}
-
-.scroll-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: #0a0a0a;
-  opacity: 1;
-  --reveal-p: 0%;
-  -webkit-mask-image: linear-gradient(to right, transparent var(--reveal-p), #000 var(--reveal-p));
-  mask-image: linear-gradient(to right, transparent var(--reveal-p), #000 var(--reveal-p));
-  transition:
-    --reveal-p var(--reveal-duration, 1s) cubic-bezier(0.22, 1, 0.36, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.92) cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-  will-change: --reveal-p, opacity;
-  pointer-events: none;
-}
-
-.scroll-card.is-revealed::after {
-  --reveal-p: 100%;
-  opacity: 0;
-}
-
-.scroll-card.centered {
-  left: 50%;
-  margin-left: calc(-1 * 150px);
-}
-
 .quote-card {
-  background: rgba(10, 10, 10, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1.5rem;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  background: rgba(14, 14, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  border-radius: 2px;
 }
 
 .card-corner {
@@ -611,21 +278,22 @@ onBeforeUnmount(() => {
 .quote-text {
   margin: 0;
   font-weight: 700;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: clamp(11px, 1.3vw, 13px);
+  line-height: 1.5;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #ffffff;
 }
 
-.gold {
+.quote-text :deep(.gold) {
   color: #c9a84c;
 }
 
 .stats-card {
   background: #c9a84c;
   color: #0a0a0a;
-  padding: 1.5rem;
+  padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  border-radius: 2px;
 }
 
 .stats-head {
@@ -635,7 +303,7 @@ onBeforeUnmount(() => {
   font-size: 10.5px;
   letter-spacing: 0.18em;
   font-weight: 600;
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.25rem;
   text-transform: uppercase;
 }
 
@@ -656,8 +324,8 @@ onBeforeUnmount(() => {
 .stats-value {
   font-family: 'Playfair Display', ui-serif, Georgia, serif;
   font-weight: 700;
-  font-size: 18px;
-  line-height: 1.25;
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
@@ -665,30 +333,19 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-.video-rect {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 70%),
-    repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 2px, #161616 2px, #161616 4px),
-    #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.video-rect.media-rect {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
-}
-
-.video-rect::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%);
-  pointer-events: none;
-  z-index: 1;
+  border-radius: 2px;
 }
 
 .youtube-wrap {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
 }
 
 .youtube-iframe {
@@ -700,10 +357,9 @@ onBeforeUnmount(() => {
 }
 
 .video-poster-link {
+  position: absolute;
+  inset: 0;
   display: block;
-  position: relative;
-  width: 100%;
-  height: 100%;
   text-decoration: none;
   color: inherit;
 }
@@ -713,12 +369,12 @@ onBeforeUnmount(() => {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: grayscale(1) contrast(0.95);
+  filter: grayscale(0.85) contrast(0.95);
   transition: filter 0.35s ease, transform 0.35s ease;
 }
 
 .video-poster-link:hover .video-poster-img {
-  filter: grayscale(0.4) contrast(1);
+  filter: grayscale(0.25) contrast(1);
   transform: scale(1.02);
 }
 
@@ -730,8 +386,8 @@ onBeforeUnmount(() => {
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 8vw, 56px);
+  height: clamp(44px, 8vw, 56px);
   border-radius: 50%;
   background: rgba(201, 168, 76, 0.92);
   color: #0a0a0a;
@@ -750,29 +406,30 @@ onBeforeUnmount(() => {
   left: 0.75rem;
   font-size: 9.5px;
   letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.65);
   font-weight: 500;
   z-index: 3;
 }
 
 .video-title {
-  margin-top: 0.75rem;
+  margin-top: 0.65rem;
   font-family: 'Playfair Display', ui-serif, Georgia, serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: clamp(13px, 1.5vw, 15px);
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .img-caption {
   margin-top: 0.35rem;
   font-size: 11px;
   letter-spacing: 0.05em;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.55);
 }
 
 .back-link {
-  display: block;
+  display: inline-block;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -786,85 +443,7 @@ onBeforeUnmount(() => {
   color: #c9a84c;
 }
 
-@media (max-width: 720px) {
-  .movie-page {
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
-    padding: 1rem 0 2rem;
-  }
-
-  .page-header {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    margin: 0 auto 1.5rem;
-    z-index: 1;
-  }
-
-  .sidebar,
-  .meta-top-right {
-    display: none;
-  }
-
-  .meta-top-left {
-    position: relative;
-    top: auto;
-    left: auto;
-    display: flex;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    letter-spacing: 0.12em;
-  }
-
-  .scroll-progress {
-    display: none;
-  }
-
-  .scroll-content {
-    position: relative;
-    inset: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: min(92vw, 560px);
-    margin: 0 auto;
-    pointer-events: auto;
-  }
-
-  .scroll-card {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    width: 100% !important;
-    margin: 0 !important;
-  }
-
-  .scroll-card::after {
-    display: none;
-  }
-
-  .quote-card,
-  .stats-card {
-    padding: 1rem;
-  }
-
-  .scroll-card.centered {
-    margin-left: 0 !important;
-    text-align: center;
-  }
-
-  .video-card .video-rect {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 16 / 9;
-  }
-
-  .img-caption {
-    font-size: 12px;
-  }
+.gold {
+  color: #c9a84c;
 }
 </style>
