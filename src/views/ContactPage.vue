@@ -1,133 +1,84 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import ParticleCanvas from '../components/ParticleCanvas.vue'
+import { useScrollGallery } from '../composables/useScrollGallery.js'
 import { contactConfig } from '../config/contact.js'
+import '../styles/scroll-gallery.css'
 
-const scrollLayer = ref(null)
-const progressEl = ref(null)
+const { scrollLayer, progressEl } = useScrollGallery('contact-page')
 
-let scrollHandler = null
-let rafId = 0
-let sectionsByAnchor = new Map()
-
-const revealedSections = new Set()
-const REVEAL_DURATION_MS = 1050
-const STAGGER_MS = 120
-const REVEAL_FROM_BOTTOM_VH = 0.2
-const MOBILE_BREAKPOINT = 720
-
-const hasVideo = computed(() => Boolean(contactConfig.youtubeVideoId?.trim()))
-
-const youtubeEmbedSrc = computed(() => {
-  const id = contactConfig.youtubeVideoId.trim()
-  return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`
+const form = reactive({
+  name: '',
+  email: '',
+  message: '',
 })
 
-const parseTopVh = (card) => {
-  const top = getComputedStyle(card).top
-  if (!top || top === 'auto') return Infinity
-  const match = top.match(/^([\d.]+)vh$/)
-  return match ? Number(match[1]) : Infinity
+const honeypot = ref('')
+const status = ref('idle')
+const errorMessage = ref('')
+
+const formEnabled = Boolean(contactConfig.formEndpoint?.trim())
+
+const resetForm = () => {
+  form.name = ''
+  form.email = ''
+  form.message = ''
 }
 
-const revealLineY = () =>
-  window.innerHeight * (1 - REVEAL_FROM_BOTTOM_VH / 100)
+const onSubmit = async () => {
+  if (!formEnabled || status.value === 'sending') return
 
-const shouldRevealSection = (triggerCard) => {
-  const { top, bottom } = triggerCard.getBoundingClientRect()
-  const line = revealLineY()
-  return top <= line && bottom > 0
-}
+  if (honeypot.value) return
 
-const revealSection = (anchor, cards) => {
-  if (revealedSections.has(anchor)) return
-  revealedSections.add(anchor)
+  const name = form.name.trim()
+  const email = form.email.trim()
+  const message = form.message.trim()
 
-  const sorted = [...cards].sort(
-    (a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left,
-  )
+  if (!name || !email || !message) {
+    status.value = 'error'
+    errorMessage.value = 'Please fill in all fields.'
+    return
+  }
 
-  sorted.forEach((card, index) => {
-    card.style.setProperty('--reveal-duration', `${REVEAL_DURATION_MS}ms`)
-    card.style.setProperty('--reveal-delay', `${index * STAGGER_MS}ms`)
-  })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    status.value = 'error'
+    errorMessage.value = 'Please enter a valid email address.'
+    return
+  }
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      sorted.forEach((card) => card.classList.add('is-revealed'))
+  status.value = 'sending'
+  errorMessage.value = ''
+
+  try {
+    const response = await fetch(contactConfig.formEndpoint.trim(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        message,
+        _subject: `Portfolio contact from ${name}`,
+      }),
     })
-  })
-}
 
-const updateCardReveals = () => {
-  for (const [anchor, cards] of sectionsByAnchor) {
-    if (revealedSections.has(anchor)) continue
-    const trigger = cards.reduce((a, b) => (parseTopVh(a) <= parseTopVh(b) ? a : b))
-    if (shouldRevealSection(trigger)) revealSection(anchor, cards)
+    if (!response.ok) {
+      throw new Error('Submission failed')
+    }
+
+    resetForm()
+    status.value = 'success'
+  } catch {
+    status.value = 'error'
+    errorMessage.value = 'Something went wrong. Please try again or email directly.'
   }
 }
-
-const onScroll = () => {
-  const sy = window.scrollY || window.pageYOffset || 0
-
-  updateCardReveals()
-
-  if (progressEl.value) {
-    const max = (document.documentElement.scrollHeight - window.innerHeight) || 1
-    const p = Math.max(0, Math.min(1, sy / max))
-    progressEl.value.style.transform = `scaleX(${p})`
-  }
-}
-
-const setupCardSections = () => {
-  const root = scrollLayer.value?.closest('.contact-page')
-  if (!root) return
-
-  sectionsByAnchor = new Map()
-  for (const card of root.querySelectorAll('.scroll-content .scroll-card')) {
-    const anchor = card.dataset.sectionAnchor
-    if (!sectionsByAnchor.has(anchor)) sectionsByAnchor.set(anchor, [])
-    sectionsByAnchor.get(anchor).push(card)
-  }
-}
-
-onMounted(() => {
-  const root = scrollLayer.value?.closest('.contact-page')
-  const isMobile = window.innerWidth <= MOBILE_BREAKPOINT
-
-  scrollHandler = () => {
-    if (rafId) return
-    rafId = window.requestAnimationFrame(() => {
-      rafId = 0
-      onScroll()
-    })
-  }
-  window.addEventListener('scroll', scrollHandler, { passive: true })
-  window.addEventListener('resize', scrollHandler, { passive: true })
-  setupCardSections()
-
-  if (isMobile && root) {
-    root.querySelectorAll('.scroll-content .scroll-card').forEach((card) => {
-      card.classList.add('is-revealed')
-    })
-  }
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(onScroll)
-  })
-})
-
-onBeforeUnmount(() => {
-  if (rafId) cancelAnimationFrame(rafId)
-  if (scrollHandler) {
-    window.removeEventListener('scroll', scrollHandler)
-    window.removeEventListener('resize', scrollHandler)
-  }
-})
 </script>
 
 <template>
-  <main class="contact-page">
+  <main class="contact-page gallery-page">
     <ParticleCanvas />
 
     <aside class="sidebar" aria-label="Primary">
@@ -159,231 +110,129 @@ onBeforeUnmount(() => {
       <p class="page-eyebrow">Get in touch</p>
       <h1 class="page-title">Contact</h1>
       <p class="page-lead">
-        Photos, film, and a direct line for music projects, software work, and collaborations.
+        For music projects, software work, and collaborations — send a message below.
       </p>
     </header>
 
-    <div ref="scrollLayer" class="scroll-content">
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="10"
-        :style="{ top: '8vh', left: '5vw', width: '280px' }"
-      >
-        <div class="card-corner">01</div>
-        <p class="quote-text">
-          LET'S BUILD SOMETHING <span class="gold">MEANINGFUL</span> TOGETHER
-        </p>
-      </article>
+    <div ref="scrollLayer" class="gallery-body">
+      <section class="gallery-section">
+        <div class="contact-layout">
+          <form
+            class="contact-form quote-card gallery-reveal"
+            novalidate
+            @submit.prevent="onSubmit"
+          >
+            <div class="form-head">
+              <span class="form-title">Send a message</span>
+              <span class="stats-arrow" aria-hidden="true">↗</span>
+            </div>
 
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="10"
-        :style="{ top: '8vh', right: '5vw', width: '300px' }"
-      >
-        <div class="stats-head">
-          <span>Contact</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
-        </div>
-        <div class="stats-label">Boxcar von productions — Myth Anthropix</div>
-        <div class="stats-value">
-          Music production, software engineering, live media, and creative direction.
-        </div>
-      </article>
+            <div class="form-field hp-field" aria-hidden="true">
+              <label for="contact-website">Website</label>
+              <input
+                id="contact-website"
+                v-model="honeypot"
+                type="text"
+                name="website"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
 
-      <article
-        v-for="(photo, index) in contactConfig.photos"
-        :key="photo.tag"
-        class="scroll-card image-card"
-        data-section-anchor="55"
-        :style="index === 0
-          ? { top: '38vh', left: '5vw' }
-          : { top: '52vh', right: '5vw' }"
-      >
-        <div
-          class="img-rect"
-          :style="index === 0
-            ? { width: '480px', height: '360px' }
-            : { width: '320px', height: '420px' }"
-        >
-          <span class="img-tag">{{ photo.tag }}</span>
-          <img
-            v-if="photo.src"
-            :src="photo.src"
-            :alt="photo.alt"
-            class="img-rect-img"
-          />
-          <div v-else class="img-placeholder" aria-hidden="true">
-            <span>Photo coming soon</span>
-          </div>
-        </div>
-        <div class="img-caption">{{ photo.caption }}</div>
-      </article>
+            <div class="form-field">
+              <label for="contact-name">Name</label>
+              <input
+                id="contact-name"
+                v-model="form.name"
+                type="text"
+                name="name"
+                autocomplete="name"
+                required
+                :disabled="status === 'sending'"
+              />
+            </div>
 
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="55"
-        :style="{ top: '48vh', right: '8vw', width: '260px' }"
-      >
-        <div class="card-corner">02</div>
-        <p class="quote-text">
-          VISUAL STORIES AND <span class="gold">LIVE</span> MOMENTS FROM THE STUDIO AND STAGE
-        </p>
-      </article>
+            <div class="form-field">
+              <label for="contact-email">Email</label>
+              <input
+                id="contact-email"
+                v-model="form.email"
+                type="email"
+                name="email"
+                autocomplete="email"
+                required
+                :disabled="status === 'sending'"
+              />
+            </div>
 
-      <article
-        class="scroll-card video-card"
-        data-section-anchor="105"
-        :style="{ top: '92vh', left: '5vw', width: 'min(640px, 88vw)' }"
-      >
-        <div class="video-head">
-          <span class="img-tag">FILM</span>
-          <span class="video-label">Featured video</span>
-        </div>
-        <div v-if="hasVideo" class="youtube-wrap youtube-wrap--interactive">
-          <iframe
-            class="youtube-iframe youtube-iframe--interactive"
-            :src="youtubeEmbedSrc"
-            title="Featured video"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-            loading="lazy"
-          />
-        </div>
-        <div v-else class="video-placeholder">
-          <span>YouTube video coming soon</span>
-          <p>Add your video ID in <code>src/config/contact.js</code></p>
-        </div>
-        <p class="img-caption">A featured reel — replace with your YouTube link when ready.</p>
-      </article>
+            <div class="form-field">
+              <label for="contact-message">Message</label>
+              <textarea
+                id="contact-message"
+                v-model="form.message"
+                name="message"
+                rows="5"
+                required
+                :disabled="status === 'sending'"
+              />
+            </div>
 
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="105"
-        :style="{ top: '92vh', right: '5vw', width: '280px' }"
-      >
-        <div class="stats-head">
-          <span>Reach out</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
-        </div>
-        <div class="stats-label">Direct</div>
-        <div class="stats-value contact-details">
-          <p v-if="contactConfig.email">
-            <a :href="`mailto:${contactConfig.email}`" data-hover>{{ contactConfig.email }}</a>
-          </p>
-          <p v-else class="contact-muted">Email coming soon</p>
-          <p>{{ contactConfig.location }}</p>
-        </div>
-      </article>
+            <p v-if="status === 'success'" class="form-feedback form-feedback--success" role="status">
+              Message sent — thank you. I'll get back to you soon.
+            </p>
+            <p v-else-if="status === 'error'" class="form-feedback form-feedback--error" role="alert">
+              {{ errorMessage }}
+            </p>
+            <p v-else-if="!formEnabled" class="form-feedback form-feedback--hint">
+              Form not configured yet — add your endpoint in
+              <code>src/config/contact.js</code>.
+            </p>
 
-      <article
-        class="scroll-card quote-card"
-        data-section-anchor="105"
-        :style="{ top: '118vh', left: '5vw', width: '300px' }"
-      >
-        <div class="card-corner">03</div>
-        <p class="quote-text">
-          MUSIC, SOFTWARE, AND CREATIVE PRODUCTION — <span class="gold">MINNEAPOLIS</span> BASED
-        </p>
-      </article>
+            <button
+              type="submit"
+              class="form-submit"
+              data-hover
+              :disabled="!formEnabled || status === 'sending'"
+            >
+              {{ status === 'sending' ? 'Sending…' : 'Send message' }}
+            </button>
+          </form>
 
-      <article
-        class="scroll-card stats-card"
-        data-section-anchor="145"
-        :style="{ top: '138vh', left: '5vw', width: '320px' }"
-      >
-        <div class="stats-head">
-          <span>Services</span>
-          <span class="stats-arrow" aria-hidden="true">↗</span>
-        </div>
-        <div class="stats-label">Available for</div>
-        <div class="stats-value">
-          Music production · Software development · Live performance · Consulting · Creative direction
-        </div>
-      </article>
+          <aside class="contact-aside">
+            <article class="quote-card gallery-reveal">
+              <div class="stats-label contact-label">Location</div>
+              <p class="contact-location">{{ contactConfig.location }}</p>
+              <p class="contact-note">{{ contactConfig.availability }}</p>
+            </article>
 
-      <article
-        class="scroll-card quote-card centered"
-        data-section-anchor="145"
-        :style="{ top: '148vh', width: '300px' }"
-      >
+            <article v-if="contactConfig.email" class="stats-card gallery-reveal">
+              <div class="stats-head">
+                <span>Direct</span>
+                <span class="stats-arrow" aria-hidden="true">↗</span>
+              </div>
+              <div class="stats-label">Email</div>
+              <div class="stats-value">
+                <a
+                  :href="`mailto:${contactConfig.email}`"
+                  class="contact-link"
+                  data-hover
+                >
+                  {{ contactConfig.email }}
+                </a>
+              </div>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <footer class="gallery-footer gallery-reveal">
         <RouterLink to="/" class="back-link" data-hover>← Back to portfolio</RouterLink>
-      </article>
+      </footer>
     </div>
   </main>
 </template>
 
 <style scoped>
-.contact-page {
-  position: relative;
-  width: 100%;
-  max-width: 1680px;
-  margin-inline: auto;
-  height: 200vh;
-  background: #0a0a0a;
-  color: #fff;
-  overflow: hidden;
-}
-
-.page-header {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  text-align: center;
-  pointer-events: none;
-  user-select: none;
-  max-width: min(90vw, 640px);
-  opacity: 0;
-  animation: header-fade 1s ease-out 0.15s forwards;
-}
-
-@keyframes header-fade {
-  to {
-    opacity: 1;
-  }
-}
-
-.page-eyebrow {
-  margin: 0 0 0.5rem;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.page-title {
-  margin: 0;
-  font-family: 'Playfair Display', ui-serif, Georgia, serif;
-  font-weight: 800;
-  font-size: clamp(72px, 14vw, 140px);
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  text-shadow: 0 0 80px rgba(201, 168, 76, 0.05);
-}
-
-.page-lead {
-  margin: 1rem 0 0;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.sidebar {
-  position: fixed;
-  left: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
 .logo-mark,
 .circle-icon,
 .side-text {
@@ -463,29 +312,6 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-.meta-top-left,
-.meta-top-right {
-  position: fixed;
-  top: 1.4rem;
-  z-index: 30;
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 500;
-  pointer-events: none;
-}
-
-.meta-top-left {
-  left: 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.meta-top-right {
-  right: 1.5rem;
-}
-
 .dot-live {
   width: 6px;
   height: 6px;
@@ -507,132 +333,169 @@ onBeforeUnmount(() => {
   }
 }
 
-.scroll-content {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+  gap: clamp(0.85rem, 2vw, 1.25rem);
+  align-items: start;
+  max-width: 960px;
 }
 
-@property --reveal-p {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 0%;
-}
-
-.scroll-card {
-  position: absolute;
-  pointer-events: auto;
-  overflow: hidden;
-  isolation: isolate;
-  opacity: 0;
-  transform: translate3d(-72px, 0, 0) scale(0.96);
-  filter: blur(8px);
-  transition:
-    transform var(--reveal-duration, 1s) cubic-bezier(0.18, 1, 0.32, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.82) ease-out,
-    filter calc(var(--reveal-duration, 1s) * 0.9) ease-out;
-  transition-delay: var(--reveal-delay, 0ms);
-  will-change: transform, opacity, filter;
-}
-
-.scroll-card.is-revealed {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: blur(0);
-}
-
-.scroll-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: 2;
-  background: linear-gradient(
-    110deg,
-    rgba(201, 168, 76, 0) 0%,
-    rgba(201, 168, 76, 0.42) 42%,
-    rgba(255, 255, 255, 0.22) 50%,
-    rgba(201, 168, 76, 0.42) 58%,
-    rgba(201, 168, 76, 0) 100%
-  );
-  transform: translateX(-130%);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    transform calc(var(--reveal-duration, 1s) * 0.95) cubic-bezier(0.2, 0.9, 0.25, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.4) ease-out;
-  transition-delay: var(--reveal-delay, 0ms);
-}
-
-.scroll-card.is-revealed::before {
-  transform: translateX(130%);
-  opacity: 1;
-}
-
-.scroll-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: #0a0a0a;
-  opacity: 1;
-  --reveal-p: 0%;
-  -webkit-mask-image: linear-gradient(to right, transparent var(--reveal-p), #000 var(--reveal-p));
-  mask-image: linear-gradient(to right, transparent var(--reveal-p), #000 var(--reveal-p));
-  transition:
-    --reveal-p var(--reveal-duration, 1s) cubic-bezier(0.22, 1, 0.36, 1),
-    opacity calc(var(--reveal-duration, 1s) * 0.92) cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-  will-change: --reveal-p, opacity;
-  pointer-events: none;
-}
-
-.scroll-card.is-revealed::after {
-  --reveal-p: 100%;
-  opacity: 0;
-}
-
-.scroll-card.centered {
-  left: 50%;
-  margin-left: calc(-1 * 150px);
+.contact-aside {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.85rem, 2vw, 1.25rem);
 }
 
 .quote-card {
-  background: rgba(10, 10, 10, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1.5rem;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.card-corner {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.75rem;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.35);
-  font-weight: 500;
-}
-
-.quote-text {
-  margin: 0;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1.45;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #ffffff;
-}
-
-.gold {
-  color: #c9a84c;
+  position: relative;
+  background: rgba(14, 14, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  border-radius: 2px;
 }
 
 .stats-card {
   background: #c9a84c;
   color: #0a0a0a;
-  padding: 1.5rem;
+  padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  border-radius: 2px;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.form-title {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.stats-arrow {
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-field label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: rgba(201, 168, 76, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.form-field input:disabled,
+.form-field textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 7rem;
+}
+
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+
+.form-feedback--success {
+  color: #c9a84c;
+}
+
+.form-feedback--error {
+  color: #e88a8a;
+}
+
+.form-feedback--hint {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-feedback--hint code {
+  font-size: 11px;
+  color: rgba(201, 168, 76, 0.85);
+}
+
+.form-submit {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.7rem 1.35rem;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  background: #c9a84c;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+
+.form-submit:hover:not(:disabled) {
+  background: #e8c87a;
+}
+
+.form-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .stats-head {
@@ -642,13 +505,8 @@ onBeforeUnmount(() => {
   font-size: 10.5px;
   letter-spacing: 0.18em;
   font-weight: 600;
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.25rem;
   text-transform: uppercase;
-}
-
-.stats-arrow {
-  font-size: 14px;
-  line-height: 1;
 }
 
 .stats-label {
@@ -663,176 +521,42 @@ onBeforeUnmount(() => {
 .stats-value {
   font-family: 'Playfair Display', ui-serif, Georgia, serif;
   font-weight: 700;
-  font-size: 18px;
-  line-height: 1.25;
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
-.contact-details {
-  font-size: 16px;
-}
-
-.contact-details p {
-  margin: 0 0 0.5rem;
-}
-
-.contact-details a {
+.contact-link {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.contact-muted {
-  opacity: 0.7;
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.image-card {
-  display: block;
-}
-
-.img-rect {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 70%),
-    repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 2px, #161616 2px, #161616 4px),
-    #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  position: relative;
-  overflow: hidden;
-}
-
-.img-rect::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.06), transparent 60%);
-  pointer-events: none;
-}
-
-.img-rect-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  filter: grayscale(1) contrast(0.95);
-}
-
-.img-placeholder {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  min-height: 240px;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.img-tag {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
+.contact-label {
   color: rgba(255, 255, 255, 0.55);
-  font-weight: 500;
-  z-index: 1;
+  margin-bottom: 0.75rem;
 }
 
-.img-caption {
-  margin-top: 0.75rem;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.55);
+.contact-location {
+  margin: 0 0 1rem;
+  font-family: 'Playfair Display', ui-serif, Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fff;
 }
 
-.video-card {
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.video-head {
-  position: relative;
-  padding: 0.75rem 0.75rem 0;
-}
-
-.video-label {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  font-size: 9.5px;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.35);
-  text-transform: uppercase;
-}
-
-.youtube-wrap {
-  position: relative;
-  width: calc(100% - 1.5rem);
-  margin: 0.75rem;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: #111;
-}
-
-.youtube-wrap--interactive {
-  pointer-events: auto;
-}
-
-.youtube-iframe--interactive {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-.video-placeholder {
-  display: grid;
-  place-items: center;
-  gap: 0.35rem;
-  width: calc(100% - 1.5rem);
-  margin: 0.75rem;
-  aspect-ratio: 16 / 9;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  background:
-    repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 2px, #161616 2px, #161616 4px),
-    #141414;
-  text-align: center;
-}
-
-.video-placeholder span {
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.video-placeholder p {
+.contact-note {
   margin: 0;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.video-placeholder code {
-  font-size: 10px;
-  color: #c9a84c;
-}
-
-.video-card .img-caption {
-  padding: 0 0.75rem 0.75rem;
-  margin-top: 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .back-link {
-  display: block;
+  display: inline-block;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -846,85 +570,14 @@ onBeforeUnmount(() => {
   color: #c9a84c;
 }
 
-@media (max-width: 720px) {
-  .contact-page {
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
-    padding: 1rem 0 2rem;
-  }
+.gold {
+  color: #c9a84c;
+}
 
-  .page-header {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    margin: 0 auto 1.5rem;
-    z-index: 1;
-  }
-
-  .sidebar,
-  .meta-top-right {
-    display: none;
-  }
-
-  .meta-top-left {
-    position: relative;
-    top: auto;
-    left: auto;
-    display: flex;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    letter-spacing: 0.12em;
-  }
-
-  .scroll-progress {
-    display: none;
-  }
-
-  .scroll-content {
-    position: relative;
-    inset: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: min(92vw, 560px);
-    margin: 0 auto;
-    pointer-events: auto;
-  }
-
-  .scroll-card {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    width: 100% !important;
-    margin: 0 !important;
-  }
-
-  .scroll-card::after {
-    display: none;
-  }
-
-  .quote-card,
-  .stats-card {
-    padding: 1rem;
-  }
-
-  .scroll-card.centered {
-    margin-left: 0 !important;
-    text-align: center;
-  }
-
-  .image-card .img-rect {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 4 / 3;
-  }
-
-  .img-caption {
-    font-size: 12px;
+@media (max-width: 1024px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    max-width: none;
   }
 }
 </style>

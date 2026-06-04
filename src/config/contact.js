@@ -1,27 +1,14 @@
 /**
- * Contact page media — swap these when your photos and YouTube video are ready.
+ * Contact page — set formEndpoint to enable submissions.
  *
- * youtubeVideoId: the ID from https://www.youtube.com/watch?v=VIDEO_ID
- * photos[].src: set to null for a placeholder until the image file is added
+ * Formspree: create a form at https://formspree.io and paste the endpoint, e.g.
+ *   formEndpoint: 'https://formspree.io/f/xxxxxxxx'
  */
 export const contactConfig = {
-  youtubeVideoId: '',
-
-  photos: [
-    {
-      src: null,
-      alt: 'Contact photo 1',
-      tag: 'STUDIO',
-      caption: 'Photo coming soon.',
-    },
-    {
-      src: null,
-      alt: 'Contact photo 2',
-      tag: 'LIVE',
-      caption: 'Photo coming soon.',
-    },
-  ],
-
-  email: '',
+  email: 'thombsjennings@gmail.com',
   location: 'Minneapolis, Minnesota',
+  availability:
+    'Music production, software engineering, live media, and creative direction.',
+
+  formEndpoint: '',
 }
