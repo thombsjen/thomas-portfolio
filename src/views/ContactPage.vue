@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 import ParticleCanvas from '../components/ParticleCanvas.vue'
 import { useScrollGallery } from '../composables/useScrollGallery.js'
 import { contactConfig } from '../config/contact.js'
+import { buildContactEmail } from '../utils/contactEmailTemplate.js'
 import '../styles/scroll-gallery.css'
 
 const { scrollLayer, progressEl } = useScrollGallery('contact-page')
@@ -17,7 +18,9 @@ const honeypot = ref('')
 const status = ref('idle')
 const errorMessage = ref('')
 
-const formEnabled = Boolean(contactConfig.formEndpoint?.trim())
+const formEnabled = Boolean(
+  contactConfig.formEndpoint?.trim() && contactConfig.bearerToken?.trim(),
+)
 
 const resetForm = () => {
   form.name = ''
@@ -50,17 +53,22 @@ const onSubmit = async () => {
   errorMessage.value = ''
 
   try {
+    const subject = `Portfolio contact from ${name}`
+    const { text, html } = buildContactEmail({ name, email, message })
+
     const response = await fetch(contactConfig.formEndpoint.trim(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        Authorization: `Bearer ${contactConfig.bearerToken.trim()}`,
       },
       body: JSON.stringify({
-        name,
-        email,
-        message,
-        _subject: `Portfolio contact from ${name}`,
+        to: contactConfig.email,
+        subject,
+        from: email,
+        text,
+        html,
       }),
     })
 
