@@ -19,7 +19,7 @@ const REVEAL_FROM_BOTTOM_VH = 0.2
 
 const YOUTUBE_VIDEO_ID = '9iHbUniBWqI'
 const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&enablejsapi=0`
-const MOBILE_BREAKPOINT = 720
+const TABLET_BREAKPOINT = 1024
 
 const parseTopVh = (card) => {
   const top = getComputedStyle(card).top
@@ -98,7 +98,7 @@ const setupCardSections = () => {
 
 onMounted(() => {
   const root = scrollLayer.value?.closest('.hero')
-  const isMobile = window.innerWidth <= MOBILE_BREAKPOINT
+  const isStackedLayout = window.innerWidth <= TABLET_BREAKPOINT
 
   scrollHandler = () => {
     if (rafId) return
@@ -111,8 +111,8 @@ onMounted(() => {
   window.addEventListener('resize', scrollHandler, { passive: true })
   setupCardSections()
 
-  if (isMobile && root) {
-    // Mobile uses a simple vertical layout, so reveal all cards immediately.
+  if (isStackedLayout && root) {
+    // Tablet/mobile use a vertical column layout, so reveal all cards immediately.
     root.querySelectorAll('.scroll-content .scroll-card').forEach((card) => {
       card.classList.add('is-revealed')
     })
@@ -230,7 +230,7 @@ onBeforeUnmount(() => {
         data-section-anchor="40"
         :style="{ top: '32vh', left: '5vw' }"
       >
-        <div class="img-rect" style="width: 560px; height: 420px;">
+        <div class="img-rect" style="--img-w: 560; --img-h: 420; width: 560px; height: 420px;">
           <span class="img-tag">ABOUT</span>
           <img src="/images/band1.jpg" alt="Live music performance" class="img-rect-img" />
         </div>
@@ -272,7 +272,7 @@ onBeforeUnmount(() => {
         data-section-anchor="95"
         :style="{ top: '95vh', right: '5vw' }"
       >
-        <div class="img-rect" style="width: 300px; height: 400px;">
+        <div class="img-rect" style="--img-w: 300; --img-h: 400; width: 300px; height: 400px;">
           <span class="img-tag">MUSIC</span>
           <img src="/images/band2.jpg" alt="Band performance" class="img-rect-img" />
         </div>
@@ -298,7 +298,7 @@ onBeforeUnmount(() => {
         data-section-anchor="145"
         :style="{ top: '145vh', left: '5vw' }"
       >
-        <div class="img-rect" style="width: 480px; height: 320px;">
+        <div class="img-rect" style="--img-w: 480; --img-h: 320; width: 480px; height: 320px;">
           <span class="img-tag">EXPERIENCE</span>
           <img src="/images/band3.jpg" alt="Creative production" class="img-rect-img" />
         </div>
@@ -340,7 +340,7 @@ onBeforeUnmount(() => {
         data-section-anchor="245"
         :style="{ top: '228vh', right: '6vw' }"
       >
-        <div class="img-rect" style="width: 520px; height: 300px;">
+        <div class="img-rect" style="--img-w: 520; --img-h: 300; width: 520px; height: 300px;">
           <span class="img-tag">PORTFOLIO</span>
           <img src="/images/band4.jpg" alt="Selected creative work" class="img-rect-img" />
         </div>
@@ -365,7 +365,7 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card stats-card"
         data-section-anchor="295"
-        :style="{ top: '278vh', right: '5vw', width: '280px' }"
+        :style="{ top: '290vh', right: '5vw', width: '280px' }"
       >
         <div class="stats-head">
           <span>Services</span>
@@ -381,9 +381,9 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card image-card"
         data-section-anchor="295"
-        :style="{ top: '285vh', left: '5vw' }"
+        :style="{ top: '312vh', left: '5vw' }"
       >
-        <div class="img-rect" style="width: 300px; height: 380px;">
+        <div class="img-rect" style="--img-w: 300; --img-h: 380; width: 300px; height: 380px;">
           <span class="img-tag">ENGINEERING</span>
           <img src="/images/engineer0.jpg" alt="Software engineering" class="img-rect-img" />
         </div>
@@ -395,7 +395,7 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card stats-card"
         data-section-anchor="345"
-        :style="{ top: '328vh', left: '5vw', width: '300px' }"
+        :style="{ top: '355vh', left: '5vw', width: '300px' }"
       >
         <div class="stats-head">
           <span>Featured Skills</span>
@@ -411,7 +411,7 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card quote-card"
         data-section-anchor="345"
-        :style="{ top: '338vh', right: '6vw', width: '290px' }"
+        :style="{ top: '368vh', right: '5vw', width: '290px' }"
       >
         <div class="card-corner">06</div>
         <p class="quote-text">
@@ -423,9 +423,9 @@ onBeforeUnmount(() => {
       <article
         class="scroll-card image-card"
         data-section-anchor="395"
-        :style="{ top: '365vh', right: '5vw' }"
+        :style="{ top: '388vh', right: '5vw' }"
       >
-        <div class="img-rect" style="width: 500px; height: 300px;">
+        <div class="img-rect" style="--img-w: 500; --img-h: 300; width: 500px; height: 300px;">
           <span class="img-tag">SELECTED WORK</span>
           <img src="/images/engineer1.jpg" alt="Technical project" class="img-rect-img" />
         </div>
@@ -435,23 +435,9 @@ onBeforeUnmount(() => {
       </article>
 
       <article
-        class="scroll-card image-card"
-        data-section-anchor="395"
-        :style="{ top: '385vh', left: '5vw' }"
-      >
-        <div class="img-rect" style="width: 280px; height: 340px;">
-          <span class="img-tag">CONTACT</span>
-          <img src="/images/engineer2.jpg" alt="Collaboration" class="img-rect-img" />
-        </div>
-        <div class="img-caption">
-          Minneapolis, Minnesota — music projects, software development, consulting, and live production.
-        </div>
-      </article>
-
-      <article
         class="scroll-card quote-card"
         data-section-anchor="395"
-        :style="{ top: '355vh', left: '5vw', width: '260px' }"
+        :style="{ top: '432vh', left: '5vw', width: '260px' }"
       >
         <div class="card-corner">07</div>
         <p class="quote-text">
@@ -463,7 +449,7 @@ onBeforeUnmount(() => {
         to="/contact"
         class="scroll-card stats-card contact-link-card"
         data-section-anchor="395"
-        :style="{ top: '355vh', left: '32vw', width: '300px' }"
+        :style="{ top: '432vh', right: '5vw', width: '300px' }"
         data-hover
       >
         <div class="stats-head">
@@ -475,6 +461,20 @@ onBeforeUnmount(() => {
           Immersive music, innovative software, and meaningful digital experiences — Minneapolis-based.
         </div>
       </RouterLink>
+
+      <article
+        class="scroll-card image-card"
+        data-section-anchor="395"
+        :style="{ top: '458vh', left: '5vw' }"
+      >
+        <div class="img-rect" style="--img-w: 280; --img-h: 340; width: 280px; height: 340px;">
+          <span class="img-tag">CONTACT</span>
+          <img src="/images/engineer2.jpg" alt="Collaboration" class="img-rect-img" />
+        </div>
+        <div class="img-caption">
+          Minneapolis, Minnesota — music projects, software development, consulting, and live production.
+        </div>
+      </article>
     </div>
   </main>
 </template>
@@ -485,7 +485,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 1680px;
   margin-inline: auto;
-  height: 450vh;
+  height: 515vh;
   background: #0a0a0a;
   color: #fff;
   overflow: hidden;
@@ -894,6 +894,7 @@ onBeforeUnmount(() => {
 }
 
 .img-rect {
+  aspect-ratio: var(--img-w, 4) / var(--img-h, 3);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.0) 70%),
     repeating-linear-gradient(
@@ -947,12 +948,13 @@ img {
   text-transform: none;
 }
 
-@media (max-width: 720px) {
+/* Tablet: single-column stack so images never overlap */
+@media (max-width: 1024px) {
   .hero {
     height: auto;
     min-height: 100vh;
     overflow: visible;
-    padding: 1rem 0 2rem;
+    padding: 1.25rem 0 2.5rem;
   }
 
   .giant-name {
@@ -960,16 +962,10 @@ img {
     top: auto;
     left: auto;
     transform: none !important;
-    font-size: clamp(72px, 24vw, 120px);
+    font-size: clamp(88px, 16vw, 160px);
     text-align: center;
-    margin: 0 auto 1rem;
+    margin: 0 auto 1.25rem;
     z-index: 1;
-  }
-
-  .sidebar,
-  .meta-top-right,
-  .spotify {
-    display: none;
   }
 
   .meta-top-left {
@@ -978,12 +974,8 @@ img {
     left: auto;
     display: flex;
     justify-content: center;
-    margin: 0 auto 1rem;
-    letter-spacing: 0.12em;
-  }
-
-  .scroll-progress {
-    display: none;
+    margin: 0 auto 1.25rem;
+    letter-spacing: 0.14em;
   }
 
   .scroll-content {
@@ -991,8 +983,8 @@ img {
     inset: auto;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    width: min(92vw, 560px);
+    gap: 1.25rem;
+    width: min(90vw, 640px);
     margin: 0 auto;
     pointer-events: auto;
   }
@@ -1013,7 +1005,7 @@ img {
 
   .quote-card,
   .stats-card {
-    padding: 1rem;
+    padding: 1.15rem;
   }
 
   .scroll-card.centered {
@@ -1027,11 +1019,67 @@ img {
   .image-card .img-rect {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: var(--img-w, 4) / var(--img-h, 3);
   }
 
   .img-caption {
     font-size: 12px;
+  }
+}
+
+/* Mobile: hide chrome that crowds narrow screens */
+@media (max-width: 720px) {
+  .hero {
+    padding: 1rem 0 2rem;
+  }
+
+  .giant-name {
+    font-size: clamp(72px, 24vw, 120px);
+    margin: 0 auto 1rem;
+  }
+
+  .sidebar,
+  .meta-top-right,
+  .spotify {
+    display: none;
+  }
+
+  .meta-top-left {
+    margin: 0 auto 1rem;
+    letter-spacing: 0.12em;
+  }
+
+  .scroll-progress {
+    display: none;
+  }
+
+  .scroll-content {
+    gap: 1rem;
+    width: min(92vw, 560px);
+  }
+
+  .quote-card,
+  .stats-card {
+    padding: 1rem;
+  }
+}
+
+/* Laptop: scale images only — positions use base template values */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .image-card .img-rect {
+    width: min(calc(var(--img-w, 400) * 1px), 36vw) !important;
+    height: auto !important;
+  }
+}
+
+/* Short laptop screens: slightly smaller images, minimal extra scroll height */
+@media (min-width: 1025px) and (max-width: 1440px) and (max-height: 900px) {
+  .hero {
+    height: 536vh;
+  }
+
+  .image-card .img-rect {
+    width: min(calc(var(--img-w, 400) * 1px), 32vw) !important;
   }
 }
 </style>
